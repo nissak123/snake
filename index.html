@@ -344,6 +344,14 @@
 
                 lastDifficultyTier = difficultyTier;
 
+                // Обновляем ширину всех существующих платформ
+
+                platforms.forEach(p => {
+
+                    p.w = currentPlatformWidth;
+
+                });
+
                 tg.HapticFeedback.notificationOccurred('success');
 
             }

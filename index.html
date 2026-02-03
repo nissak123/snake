@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Jump Challenge</title>
+    <title>Doodle Jump Challenge Fixed</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -167,10 +167,16 @@
             if (player.x < -40) player.x = 320;
             if (player.x > 320) player.x = -40;
 
+            // Логика сложности: МГНОВЕННОЕ уменьшение
             let difficultyTier = Math.floor(score / 1000);
             if (difficultyTier > lastDifficultyTier) {
-                // ИЗМЕНЕНО: теперь уменьшается в два раза (коэффициент 0.5)
-                currentPlatformWidth *= 0.5;
+                currentPlatformWidth *= 0.5; // Уменьшаем ширину для будущих платформ
+                
+                // Мгновенно уменьшаем все платформы, которые уже на экране!
+                platforms.forEach(p => {
+                    p.w = currentPlatformWidth;
+                });
+
                 lastDifficultyTier = difficultyTier;
                 tg.HapticFeedback.notificationOccurred('success');
             }
@@ -201,6 +207,7 @@
                         p.y = -20;
                         p.x = Math.random() * (320 - currentPlatformWidth);
                         p.mv = Math.random() > 0.5 ? (Math.random() - 0.5) * (4 + difficultyTier) : 0;
+                        p.w = currentPlatformWidth; // Убеждаемся, что новая платформа нужного размера
                     }
                 });
                 particles.forEach(part => part.y += offset);

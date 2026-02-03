@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Jump Photo</title>
+    <title>Doodle Jump My Photo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-color: var(--tg-theme-bg-color, #f8f8f8);
-            --text-color: var(--tg-theme-text-color, #000000);
             --button-color: var(--tg-theme-button-color, #2481cc);
             --button-text: var(--tg-theme-button-text-color, #ffffff);
         }
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
             display: flex;
@@ -22,14 +21,14 @@
             justify-content: center;
             height: 100vh;
             overflow: hidden;
-            touch-action: none; /* Отключаем системные жесты */
+            touch-action: none;
         }
         #gameContainer {
             position: relative;
             width: 320px;
-            height: 520px;
-            border: 3px solid var(--button-color);
+            height: 500px;
             background-color: #aaddff;
+            border: 3px solid var(--button-color);
             overflow: hidden;
         }
         #score {
@@ -41,9 +40,8 @@
         #startScreen {
             position: absolute;
             inset: 0;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.5);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 10;
@@ -54,12 +52,12 @@
             color: var(--button-text);
             border: none;
             border-radius: 10px;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
         }
         #controls {
             display: flex;
-            gap: 40px;
+            gap: 50px;
             margin-top: 20px;
         }
         .btn {
@@ -68,7 +66,7 @@
             border-radius: 50%;
             border: none;
             color: white;
-            font-size: 24px;
+            font-size: 30px;
         }
     </style>
 </head>
@@ -76,9 +74,9 @@
 
     <div id="gameContainer">
         <div id="score">0</div>
-        <canvas id="gameCanvas" width="320" height="520"></canvas>
+        <canvas id="gameCanvas" width="320" height="500"></canvas>
         <div id="startScreen">
-            <button id="start-button">ИГРАТЬ</button>
+            <button id="start-button">НАЖМИ И ИГРАЙ</button>
         </div>
     </div>
 
@@ -94,33 +92,28 @@
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const startScreen = document.getElementById('startScreen');
-        const startBtn = document.getElementById('start-button');
         const scoreDiv = document.getElementById('score');
+        const startScreen = document.getElementById('startScreen');
 
+        // ВАЖНО: Файл в папке должен называться точно player.png
         const playerImg = new Image();
-        playerImg.src = 'player.png.png'; // Убедитесь, что файл с этим именем лежит в папке!
+        playerImg.src = 'player.png?v=' + Date.now(); // Добавили случайное число, чтобы обойти кэш
 
-        let player = { x: 135, y: 350, w: 50, h: 50, dx: 0, dy: 0 };
+        let player = { x: 135, y: 300, w: 55, h: 55, dx: 0, dy: 0 };
         let platforms = [];
         let score = 0;
         let gameOver = true;
         let gameInterval;
 
-        function createPlatforms() {
-            platforms = [];
-            // Первая платформа точно под игроком
-            platforms.push({ x: 110, y: 450, w: 100, h: 15 });
-            for(let i = 1; i < 7; i++) {
-                platforms.push({ x: Math.random() * 220, y: 450 - (i * 80), w: 60, h: 12 });
-            }
-        }
-
         function init() {
-            player.x = 135; player.y = 350; player.dy = 0; player.dx = 0;
+            player.x = 135; player.y = 300; player.dy = 0; player.dx = 0;
             score = 0;
             scoreDiv.textContent = '0';
-            createPlatforms();
+            platforms = [];
+            platforms.push({ x: 110, y: 400, w: 100, h: 15 });
+            for(let i = 1; i < 7; i++) {
+                platforms.push({ x: Math.random() * 240, y: 400 - (i * 80), w: 60, h: 12 });
+            }
             startScreen.style.display = 'none';
             gameOver = false;
             if(gameInterval) clearInterval(gameInterval);
@@ -130,18 +123,16 @@
         function update() {
             if(gameOver) return;
 
-            player.dy += 0.25; // гравитация
+            player.dy += 0.25;
             player.y += player.dy;
             player.x += player.dx;
 
-            // Сквозной проход через края экрана
-            if (player.x < -25) player.x = 320;
-            if (player.x > 320) player.x = -25;
+            if (player.x < -30) player.x = 320;
+            if (player.x > 320) player.x = -30;
 
-            // Прыжок от платформ
             if (player.dy > 0) {
                 platforms.forEach(p => {
-                    if (player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
+                    if (player.x < p.x + p.w && player.x + player.w > p.x &&
                         player.y + player.h > p.y && player.y + player.h < p.y + p.h + 10) {
                         player.dy = -9;
                         tg.HapticFeedback.impactOccurred('light');
@@ -149,68 +140,57 @@
                 });
             }
 
-            // Движение камеры и генерация новых платформ
             if (player.y < 200) {
                 let offset = 200 - player.y;
                 player.y = 200;
-                score += Math.floor(offset);
-                scoreDiv.textContent = Math.floor(score / 10);
+                score += Math.floor(offset / 5);
+                scoreDiv.textContent = score;
                 platforms.forEach(p => {
                     p.y += offset;
-                    if (p.y > 520) {
+                    if (p.y > 500) {
                         p.y = -20;
                         p.x = Math.random() * 240;
                     }
                 });
             }
 
-            // Проигрыш (упал ниже экрана)
-            if (player.y > 520) {
+            if (player.y > 500) {
                 gameOver = true;
                 clearInterval(gameInterval);
                 tg.HapticFeedback.notificationOccurred('error');
-                alert("Конец! Счет: " + Math.floor(score/10));
+                alert("Конец игры! Счет: " + score);
                 startScreen.style.display = 'flex';
             }
-
             draw();
         }
 
         function draw() {
-            ctx.clearRect(0, 0, 320, 520);
-            
-            // Рисуем платформы
+            ctx.clearRect(0, 0, 320, 500);
             ctx.fillStyle = "#2e7d32";
             platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-            // Рисуем игрока
-            if (playerImg.complete && playerImg.naturalWidth !== 0) {
+            if (playerImg.complete && playerImg.naturalWidth > 0) {
                 ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
             } else {
-                ctx.fillStyle = "orange"; // Квадрат, если картинка не найдена
+                ctx.fillStyle = "orange";
                 ctx.fillRect(player.x, player.y, player.w, player.h);
+                // Подсказка на экране (видна только в режиме разработки)
+                ctx.fillStyle = "black";
+                ctx.fillText("Картинка player.png не найдена", 10, 480);
             }
         }
 
-        // Управление (исправлено)
-        const move = (dir) => { player.dx = dir; tg.HapticFeedback.impactOccurred('light'); };
+        const move = (dir) => { player.dx = dir; if(dir !== 0) tg.HapticFeedback.impactOccurred('light'); };
         
         const L = document.getElementById('left-btn');
         const R = document.getElementById('right-btn');
 
-        ['touchstart', 'mousedown'].forEach(evt => {
-            L.addEventListener(evt, (e) => { e.preventDefault(); move(-4); });
-            R.addEventListener(evt, (e) => { e.preventDefault(); move(4); });
-        });
+        L.onmousedown = L.ontouchstart = (e) => { e.preventDefault(); move(-5); };
+        R.onmousedown = R.ontouchstart = (e) => { e.preventDefault(); move(5); };
+        window.onmouseup = window.ontouchend = () => move(0);
 
-        ['touchend', 'mouseup', 'mouseleave'].forEach(evt => {
-            L.addEventListener(evt, () => move(0));
-            R.addEventListener(evt, () => move(0));
-        });
-
-        startBtn.onclick = init;
-        draw(); // Показать первый кадр
+        document.getElementById('start-button').onclick = init;
+        draw();
     </script>
 </body>
 </html>
-

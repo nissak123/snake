@@ -1,165 +1,523 @@
 <!DOCTYPE html>
+
 <html lang="ru">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Jump Simple</title>
+
+    <title>Doodle Jump Challenge</title>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
+
+        :root {
+
+            --tg-bg: var(--tg-theme-bg-color, #ffffff);
+
+            --tg-btn: var(--tg-theme-button-color, #2481cc);
+
+            --tg-btn-text: var(--tg-theme-button-text-color, #ffffff);
+
+        }
+
         body {
-            margin: 0; padding: 0;
-            background: #f0f0f0;
-            display: flex; flex-direction: column; align-items: center;
-            height: 100vh; font-family: sans-serif;
-            overflow: hidden; touch-action: none;
+
+            font-family: 'Arial', sans-serif;
+
+            background-color: #f0f0f0;
+
+            margin: 0;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            height: 100vh;
+
+            overflow: hidden;
+
+            touch-action: none;
+
         }
+
         #gameContainer {
-            position: relative; width: 320px; height: 500px;
-            background: #fff; border: 2px solid #333;
+
+            position: relative;
+
+            width: 320px;
+
+            height: 500px;
+
+            background-color: #ffffff;
+
+            border: 2px solid #ddd;
+
+            overflow: hidden;
+
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
         }
-        canvas { display: block; background: #fff; }
+
         #score {
-            position: absolute; top: 10px; left: 10px;
-            font-size: 24px; font-weight: bold; pointer-events: none;
+
+            position: absolute;
+
+            top: 15px; left: 15px;
+
+            font-size: 26px; font-weight: 900; color: #333;
+
+            z-index: 5;
+
         }
+
+        #startScreen {
+
+            position: absolute;
+
+            inset: 0;
+
+            background: rgba(255,255,255,0.8);
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            z-index: 10;
+
+        }
+
         #start-button {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px 40px; font-size: 20px;
-            background: #2481cc; color: #fff;
-            border: none; border-radius: 10px; z-index: 1000;
+
+            padding: 18px 35px;
+
+            background: var(--tg-btn);
+
+            color: var(--tg-btn-text);
+
+            border: none;
+
+            border-radius: 15px;
+
+            font-size: 20px;
+
+            font-weight: bold;
+
         }
-        #controls { display: flex; gap: 40px; margin-top: 20px; }
+
+        #controls {
+
+            display: flex;
+
+            gap: 60px;
+
+            margin-top: 25px;
+
+        }
+
         .btn {
-            width: 80px; height: 80px; background: #2481cc;
-            color: #fff; border-radius: 50%; border: none; font-size: 30px;
+
+            width: 75px; height: 75px;
+
+            background: var(--tg-btn);
+
+            border-radius: 50%;
+
+            border: none;
+
+            color: white;
+
+            font-size: 30px;
+
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
         }
+
     </style>
+
 </head>
+
 <body>
 
-<div id="gameContainer">
-    <div id="score">0</div>
-    <canvas id="gameCanvas" width="320" height="500"></canvas>
-    <button id="start-button">СТАРТ</button>
-</div>
 
-<div id="controls">
-    <button id="left-btn" class="btn">◀</button>
-    <button id="right-btn" class="btn">▶</button>
-</div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+    <div id="gameContainer">
 
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const startBtn = document.getElementById('start-button');
-    const scoreDiv = document.getElementById('score');
+        <div id="score">0</div>
 
-    const playerImg = new Image();
-    playerImg.src = 'player.png'; 
+        <canvas id="gameCanvas" width="320" height="500"></canvas>
 
-    let player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
-    let platforms = [];
-    let particles = [];
-    let score = 0;
-    let gameOver = true;
-    let gameInterval;
-    let currentWidth = 70;
+        <div id="startScreen">
 
-    function createPlatforms() {
-        platforms = [];
-        currentWidth = 70;
-        platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0 });
-        for(let i = 1; i < 7; i++) {
-            platforms.push({ x: Math.random()*240, y: 420-(i*80), w: 70, h: 12, mv: Math.random()>0.7?2:0 });
-        }
-    }
+            <button id="start-button">ПОГНАЛИ!</button>
 
-    function init() {
-        console.log("Игра запущена");
-        gameOver = false;
-        startBtn.style.display = 'none';
-        score = 0;
-        scoreDiv.textContent = '0';
-        player.x = 135; player.y = 300; player.dy = 0;
-        createPlatforms();
-        if(gameInterval) clearInterval(gameInterval);
-        gameInterval = setInterval(update, 1000/60);
-    }
+        </div>
 
-    function update() {
-        if(gameOver) return;
-        player.dy += 0.28;
-        player.y += player.dy;
-        player.x += player.dx;
+    </div>
 
-        if (player.x < -30) player.x = 320;
-        if (player.x > 320) player.x = -30;
 
-        // Сложность
-        if (score > 0 && score % 1000 < 50 && score/1000 >= platforms.length/100) { // грубая проверка на порог
-             // (упростили пока для теста стабильности)
-        }
 
-        platforms.forEach(p => {
-            if (p.mv) {
-                p.x += p.mv;
-                if (p.x <= 0 || p.x + p.w >= 320) p.mv *= -1;
+    <div id="controls">
+
+        <button id="left-btn" class="btn">◀</button>
+
+        <button id="right-btn" class="btn">▶</button>
+
+    </div>
+
+
+
+    <script>
+
+        const tg = window.Telegram.WebApp;
+
+        tg.ready();
+
+        tg.expand();
+
+
+
+        const canvas = document.getElementById('gameCanvas');
+
+        const ctx = canvas.getContext('2d');
+
+        const scoreDiv = document.getElementById('score');
+
+        const startScreen = document.getElementById('startScreen');
+
+
+
+        const playerImg = new Image();
+
+        playerImg.src = 'player.png?v=' + Date.now(); 
+
+
+
+        let player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
+
+        let platforms = [];
+
+        let particles = [];
+
+        let score = 0;
+
+        let gameOver = true;
+
+        let gameInterval;
+
+        
+
+        const BASE_PLATFORM_WIDTH = 70;
+
+        let currentPlatformWidth = BASE_PLATFORM_WIDTH;
+
+        let lastDifficultyTier = 0;
+
+
+
+        function createPlatforms() {
+
+            platforms = [];
+
+            currentPlatformWidth = BASE_PLATFORM_WIDTH;
+
+            lastDifficultyTier = 0;
+
+            platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0 });
+
+            for(let i = 1; i < 7; i++) {
+
+                addPlatform(420 - (i * 80));
+
             }
-            if (player.dy > 0 && player.x < p.x + p.w && player.x + player.w > p.x &&
-                player.y + player.h > p.y && player.y + player.h < p.y + p.h + 10) {
-                player.dy = -10;
-                score += 100; // Для теста сразу по 100 за прыжок
-                scoreDiv.textContent = score;
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        });
 
-        if (player.y < 200) {
-            let offset = 200 - player.y;
-            player.y = 200;
-            platforms.forEach(p => {
-                p.y += offset;
-                if (p.y > 500) { p.y = -20; p.x = Math.random()*240; }
+        }
+
+
+
+        function addPlatform(yPos) {
+
+            const isMoving = Math.random() > 0.6;
+
+            platforms.push({
+
+                x: Math.random() * (320 - currentPlatformWidth),
+
+                y: yPos,
+
+                w: currentPlatformWidth,
+
+                h: 12,
+
+                mv: isMoving ? (Math.random() - 0.5) * 4 : 0
+
             });
+
         }
 
-        if (player.y > 500) {
-            gameOver = true;
-            startBtn.style.display = 'block';
-            startBtn.textContent = "ЕЩЕ РАЗ";
+
+
+        function createGoldParticles(x, y) {
+
+            for (let i = 0; i < 8; i++) {
+
+                particles.push({
+
+                    x: x + player.w / 2,
+
+                    y: y + player.h,
+
+                    vx: (Math.random() - 0.5) * 4,
+
+                    vy: Math.random() * -3 - 1,
+
+                    life: 40,
+
+                    size: 4 + Math.random() * 3
+
+                });
+
+            }
+
         }
+
+
+
+        function init() {
+
+            player.x = 135; player.y = 300; player.dy = 0; player.dx = 0;
+
+            score = 0;
+
+            scoreDiv.textContent = '0';
+
+            particles = [];
+
+            createPlatforms();
+
+            startScreen.style.display = 'none';
+
+            gameOver = false;
+
+            if(gameInterval) clearInterval(gameInterval);
+
+            gameInterval = setInterval(update, 1000/60);
+
+        }
+
+
+
+        function update() {
+
+            if(gameOver) return;
+
+
+
+            player.dy += 0.28;
+
+            player.y += player.dy;
+
+            player.x += player.dx;
+
+
+
+            if (player.x < -40) player.x = 320;
+
+            if (player.x > 320) player.x = -40;
+
+
+
+            let difficultyTier = Math.floor(score / 1000);
+
+            if (difficultyTier > lastDifficultyTier) {
+
+                currentPlatformWidth *= 0.5;
+
+                lastDifficultyTier = difficultyTier;
+
+                tg.HapticFeedback.notificationOccurred('success');
+
+            }
+
+
+
+            platforms.forEach(p => {
+
+                if (p.mv !== 0) {
+
+                    p.x += p.mv;
+
+                    if (p.x <= 0 || p.x + p.w >= 320) p.mv *= -1;
+
+                }
+
+
+
+                if (player.dy > 0 && player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
+
+                    player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
+
+                    player.dy = -10;
+
+                    score += 20; 
+
+                    tg.HapticFeedback.impactOccurred('medium');
+
+                    createGoldParticles(player.x, player.y);
+
+                }
+
+            });
+
+
+
+            if (player.y < 200) {
+
+                let offset = 200 - player.y;
+
+                player.y = 200;
+
+                score += Math.floor(offset); 
+
+                scoreDiv.textContent = score;
+
+                platforms.forEach(p => {
+
+                    p.y += offset;
+
+                    if (p.y > 500) {
+
+                        p.y = -20;
+
+                        p.x = Math.random() * (320 - currentPlatformWidth);
+
+                        p.mv = Math.random() > 0.5 ? (Math.random() - 0.5) * (4 + difficultyTier) : 0;
+
+                    }
+
+                });
+
+                particles.forEach(part => part.y += offset);
+
+            }
+
+
+
+            if (player.y > 500) {
+
+                gameOver = true;
+
+                clearInterval(gameInterval);
+
+                tg.HapticFeedback.notificationOccurred('error');
+
+                alert("Game Over! Твой рекорд: " + score);
+
+                startScreen.style.display = 'flex';
+
+            }
+
+
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+
+                let part = particles[i];
+
+                part.x += part.vx; part.y += part.vy;
+
+                part.vy += 0.15; part.life--;
+
+                if (part.life <= 0) particles.splice(i, 1);
+
+            }
+
+
+
+            draw();
+
+        }
+
+
+
+        function draw() {
+
+            ctx.clearRect(0, 0, 320, 500);
+
+            platforms.forEach(p => {
+
+                ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+
+                ctx.fillRect(p.x, p.y, p.w, p.h);
+
+            });
+
+
+
+            particles.forEach(part => {
+
+                ctx.globalAlpha = part.life / 40;
+
+                ctx.fillStyle = "#FFD700";
+
+                ctx.beginPath();
+
+                ctx.arc(part.x, part.y, part.size, 0, Math.PI*2);
+
+                ctx.fill();
+
+                ctx.globalAlpha = 1;
+
+            });
+
+
+
+            if (playerImg.complete && playerImg.naturalWidth > 0) {
+
+                ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+
+            } else {
+
+                ctx.fillStyle = "#ff8f00";
+
+                ctx.fillRect(player.x, player.y, player.w, player.h);
+
+            }
+
+        }
+
+
+
+        const move = (dir) => { player.dx = dir; };
+
+        const L = document.getElementById('left-btn');
+
+        const R = document.getElementById('right-btn');
+
+
+
+        L.onmousedown = L.ontouchstart = (e) => { e.preventDefault(); move(-5); };
+
+        R.onmousedown = R.ontouchstart = (e) => { e.preventDefault(); move(5); };
+
+        window.onmouseup = window.ontouchend = () => move(0);
+
+
+
+        document.getElementById('start-button').onclick = init;
+
         draw();
-    }
 
-    function draw() {
-        ctx.clearRect(0, 0, 320, 500);
-        ctx.fillStyle = "green";
-        platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
-        if (playerImg.complete) {
-            ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
-        } else {
-            ctx.fillStyle = "orange";
-            ctx.fillRect(player.x, player.y, player.w, player.h);
-        }
-    }
+    </script>
 
-    // УПРАВЛЕНИЕ - самые простые события
-    const L = document.getElementById('left-btn');
-    const R = document.getElementById('right-btn');
-
-    L.ontouchstart = L.onmousedown = (e) => { e.preventDefault(); player.dx = -5; };
-    R.ontouchstart = R.onmousedown = (e) => { e.preventDefault(); player.dx = 5; };
-    window.ontouchend = window.onmouseup = () => { player.dx = 0; };
-
-    startBtn.onclick = init;
-    startBtn.ontouchstart = (e) => { e.preventDefault(); init(); };
-
-    draw();
-</script>
 </body>
+
 </html>

@@ -340,7 +340,7 @@
 
             if (difficultyTier > lastDifficultyTier) {
 
-                currentPlatformWidth *= 0.5;
+                currentPlatformWidth *= 0.9;
 
                 lastDifficultyTier = difficultyTier;
 
@@ -364,7 +364,11 @@
 
                     p.x += p.mv;
 
-                    if (p.x <= 0 || p.x + p.w >= 320) p.mv *= -1;
+                    // Платформы двигаются по кругу через экран
+
+                    if (p.x < -p.w) p.x = 320;
+
+                    if (p.x > 320) p.x = -p.w;
 
                 }
 

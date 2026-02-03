@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Jump High Score Edition</title>
+    <title>Doodle Jump Challenge</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -167,10 +167,10 @@
             if (player.x < -40) player.x = 320;
             if (player.x > 320) player.x = -40;
 
-            // Каждые 1000 очков уменьшаем платформы
             let difficultyTier = Math.floor(score / 1000);
             if (difficultyTier > lastDifficultyTier) {
-                currentPlatformWidth *= 0.7;
+                // ИЗМЕНЕНО: теперь уменьшается в два раза (коэффициент 0.5)
+                currentPlatformWidth *= 0.5;
                 lastDifficultyTier = difficultyTier;
                 tg.HapticFeedback.notificationOccurred('success');
             }
@@ -184,10 +184,7 @@
                 if (player.dy > 0 && player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
                     player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
                     player.dy = -10;
-                    
-                    // ДОБАВЛЕНО: +20 очков за сам факт касания платформы
                     score += 20; 
-                    
                     tg.HapticFeedback.impactOccurred('medium');
                     createGoldParticles(player.x, player.y);
                 }
@@ -196,11 +193,7 @@
             if (player.y < 200) {
                 let offset = 200 - player.y;
                 player.y = 200;
-
-                // ИЗМЕНЕНО: теперь за высоту даем больше (примерно в 2 раза больше, чем было)
-                // Обычный прыжок на 80 пикселей даст 80 очков + 20 за касание = 100
                 score += Math.floor(offset); 
-                
                 scoreDiv.textContent = score;
                 platforms.forEach(p => {
                     p.y += offset;

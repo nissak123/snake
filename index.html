@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Telegram Snake</title>
+    <title>Doodle Jump App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: var(--tg-theme-bg-color, #ffffff);
+            --bg-color: var(--tg-theme-bg-color, #f8f8f8);
             --text-color: var(--tg-theme-text-color, #000000);
             --button-color: var(--tg-theme-button-color, #2481cc);
             --button-text: var(--tg-theme-button-text-color, #ffffff);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #e8e8e8);
+            --main-font: 'Comic Sans MS', cursive, sans-serif; /* Для дудл-стиля */
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: var(--main-font);
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
@@ -26,84 +27,125 @@
             height: 100vh;
             overflow: hidden;
             touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 320px; /* Ширина игры */
+            height: 568px; /* Высота игры (как у телефона) */
+            border: 4px solid var(--button-color);
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #aaddff; /* Светло-голубое небо */
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         #score {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        canvas {
-            background-color: var(--secondary-bg);
-            border: 3px solid var(--button-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        #controls {
-            margin-top: 20px;
-            display: grid;
-            grid-template-areas:
-                ". up ."
-                "left . right"
-                ". down .";
-            gap: 15px;
-        }
-
-        .btn {
-            width: 65px;
-            height: 65px;
-            background-color: var(--button-color);
-            color: var(--button-text);
-            border: none;
-            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            left: 10px;
             font-size: 28px;
+            font-weight: bold;
+            color: #2e7d32; /* Темно-зеленый, как в оригинале */
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.7);
+            z-index: 10;
+        }
+
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
+            z-index: 20;
         }
 
-        .btn:active {
-            transform: scale(0.9);
-            filter: brightness(0.9);
+        #startScreen h1 {
+            color: #ffeb3b; /* Желтый заголовок */
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.5);
         }
-
-        #up { grid-area: up; }
-        #down { grid-area: down; }
-        #left { grid-area: left; }
-        #right { grid-area: right; }
 
         #start-button {
-            position: absolute;
             padding: 15px 40px;
-            font-size: 20px;
+            font-size: 22px;
             background-color: var(--button-color);
             color: var(--button-text);
             border: none;
             border-radius: 12px;
             cursor: pointer;
-            z-index: 10;
             font-weight: bold;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+            -webkit-tap-highlight-color: transparent;
+        }
+        #start-button:active {
+            transform: scale(0.95);
+            filter: brightness(0.9);
+        }
+
+        #controls {
+            position: absolute; /* Контролы будут поверх канваса */
+            bottom: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 0 20px; /* Отступы по бокам */
+            box-sizing: border-box;
+            z-index: 15; /* Выше канваса */
+        }
+
+        .control-btn {
+            width: 80px;
+            height: 80px;
+            background-color: var(--button-color);
+            color: var(--button-text);
+            border: none;
+            border-radius: 50%;
+            font-size: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .control-btn:active {
+            transform: scale(0.95);
+            filter: brightness(0.9);
         }
     </style>
 </head>
 <body>
 
-    <div id="score">Счет: 0</div>
-    
-    <canvas id="gameCanvas" width="300" height="300"></canvas>
-    
-    <button id="start-button">НАЧАТЬ ИГРУ</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="320" height="568"></canvas>
+        <div id="score">0</div>
 
-    <div id="controls">
-        <button id="up" class="btn">▲</button>
-        <button id="left" class="btn">◀</button>
-        <button id="right" class="btn">▶</button>
-        <button id="down" class="btn">▼</button>
+        <div id="startScreen">
+            <h1>Doodle Jump!</h1>
+            <button id="start-button">Начать игру</button>
+        </div>
+
+        <div id="controls">
+            <button id="left-btn" class="control-btn">◀</button>
+            <button id="right-btn" class="control-btn">▶</button>
+        </div>
     </div>
 
     <script>
@@ -114,139 +156,210 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score');
-        const startBtn = document.getElementById('start-button');
-        const controlPanel = document.getElementById('controls');
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('start-button');
+        const leftButton = document.getElementById('left-btn');
+        const rightButton = document.getElementById('right-btn');
+        const gameContainer = document.getElementById('gameContainer');
 
-        const gridSize = 20;
-        const tileCount = canvas.width / gridSize;
-        
-        let snake = [];
-        let food = { x: 5, y: 5 };
-        let dx = 0;
-        let dy = 0;
+        const GAME_WIDTH = canvas.width;
+        const GAME_HEIGHT = canvas.height;
+
+        // Player settings
+        const player = {
+            x: GAME_WIDTH / 2 - 25,
+            y: GAME_HEIGHT - 100,
+            width: 50,
+            height: 50,
+            dy: 0, // velocity y
+            dx: 0, // velocity x
+            jumpPower: -10,
+            gravity: 0.3,
+            onPlatform: false
+        };
+
+        // Platform settings
+        const platforms = [];
+        const PLATFORM_WIDTH = 60;
+        const PLATFORM_HEIGHT = 10;
+        const PLATFORM_GAP = 60; // Расстояние между платформами
+
         let score = 0;
-        let gameInterval = null;
-        let isGameOver = true;
+        let gameOver = true;
+        let cameraY = 0; // Для смещения игрового мира при подъеме
+        let lastPlatformY = GAME_HEIGHT; // Y последней созданной платформы
 
+        // Game loop interval
+        let gameInterval;
+
+        // --- Game Initialization ---
         function initGame() {
-            snake = [{ x: 10, y: 10 }, { x: 10, y: 11 }, { x: 10, y: 12 }];
-            dx = 0;
-            dy = -1;
+            player.x = GAME_WIDTH / 2 - player.width / 2;
+            player.y = GAME_HEIGHT - 100;
+            player.dy = 0;
+            player.dx = 0;
+            player.onPlatform = false;
+
+            platforms.length = 0; // Clear platforms
             score = 0;
-            scoreDisplay.textContent = `Счет: ${score}`;
-            isGameOver = false;
-            startBtn.style.display = 'none';
-            controlPanel.style.opacity = '1';
-            generateFood();
+            scoreDisplay.textContent = '0';
+            cameraY = 0;
+            lastPlatformY = GAME_HEIGHT;
+
+            // Generate initial platforms
+            generatePlatform(GAME_WIDTH / 2 - PLATFORM_WIDTH / 2, GAME_HEIGHT - 30, true); // Starting platform
+            for (let i = 0; i < 8; i++) {
+                generateRandomPlatform();
+            }
+
+            startScreen.style.display = 'none';
+            gameOver = false;
             if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(gameLoop, 150);
+            gameInterval = setInterval(gameLoop, 1000 / 60); // 60 FPS
         }
 
-        function generateFood() {
-            food = {
-                x: Math.floor(Math.random() * tileCount),
-                y: Math.floor(Math.random() * tileCount)
-            };
-            // Проверка, чтобы еда не попала на змейку
-            if (snake.some(s => s.x === food.x && s.y === food.y)) generateFood();
+        // --- Platform Generation ---
+        function generatePlatform(x, y, isStarting = false) {
+            platforms.push({ x: x, y: y, width: PLATFORM_WIDTH, height: PLATFORM_HEIGHT, isStarting: isStarting });
         }
 
-        function draw() {
-            // Очистка поля
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--secondary-bg');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function generateRandomPlatform() {
+            const minX = 0;
+            const maxX = GAME_WIDTH - PLATFORM_WIDTH;
+            const newX = Math.random() * (maxX - minX) + minX;
+            lastPlatformY -= (PLATFORM_GAP + Math.random() * 20); // Немного рандома
+            generatePlatform(newX, lastPlatformY);
+        }
 
-            // Еда
-            ctx.fillStyle = "#ff3b30";
-            ctx.beginPath();
-            ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI * 2);
-            ctx.fill();
+        // --- Drawing Functions ---
+        function drawPlayer() {
+            ctx.fillStyle = '#ff8f00'; // Оранжевый doodle
+            ctx.fillRect(player.x, player.y + cameraY, player.width, player.height);
+            // Глазки для doodle
+            ctx.fillStyle = 'white';
+            ctx.fillRect(player.x + 10, player.y + cameraY + 10, 8, 8);
+            ctx.fillRect(player.x + player.width - 18, player.y + cameraY + 10, 8, 8);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(player.x + 12, player.y + cameraY + 12, 4, 4);
+            ctx.fillRect(player.x + player.width - 16, player.y + cameraY + 12, 4, 4);
+        }
 
-            // Змейка
-            ctx.fillStyle = "#34c759";
-            snake.forEach((part, index) => {
-                ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
-                if (index === 0) { // Глаза у головы
-                    ctx.fillStyle = "white";
-                    ctx.fillRect(part.x * gridSize + 4, part.y * gridSize + 4, 3, 3);
-                    ctx.fillRect(part.x * gridSize + 12, part.y * gridSize + 4, 3, 3);
-                    ctx.fillStyle = "#34c759";
-                }
+        function drawPlatforms() {
+            ctx.fillStyle = '#2e7d32'; // Зеленые платформы
+            platforms.forEach(p => {
+                ctx.fillRect(p.x, p.y + cameraY, p.width, p.height);
             });
         }
 
+        function drawGame() {
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            drawPlatforms();
+            drawPlayer();
+        }
+
+        // --- Game Logic ---
         function gameLoop() {
-            if (isGameOver) return;
+            if (gameOver) return;
 
-            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            // Apply gravity
+            player.dy += player.gravity;
+            player.y += player.dy;
 
-            // Столкновение со стенами
-            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) return gameOver();
+            // Move player horizontally
+            player.x += player.dx;
 
-            // Столкновение с телом
-            if (snake.some(part => part.x === head.x && part.y === head.y)) return gameOver();
-
-            snake.unshift(head);
-
-            if (head.x === food.x && head.y === food.y) {
-                score += 10;
-                scoreDisplay.textContent = `Счет: ${score}`;
-                tg.HapticFeedback.impactOccurred('medium');
-                generateFood();
-            } else {
-                snake.pop();
+            // Wrap around screen horizontally
+            if (player.x + player.width < 0) {
+                player.x = GAME_WIDTH;
+            } else if (player.x > GAME_WIDTH) {
+                player.x = -player.width;
             }
 
-            draw();
-        }
+            // Camera movement
+            if (player.y + cameraY < GAME_HEIGHT / 2) {
+                cameraY = GAME_HEIGHT / 2 - player.y;
+                score = Math.max(score, Math.floor(-player.y / 10)); // Score based on height
+                scoreDisplay.textContent = score;
+            }
 
-        function gameOver() {
-            isGameOver = true;
-            clearInterval(gameInterval);
-            tg.HapticFeedback.notificationOccurred('error');
-            alert(`Игра окончена! Счет: ${score}`);
-            startBtn.style.display = 'block';
-        }
+            // Platform collision
+            player.onPlatform = false;
+            platforms.forEach(p => {
+                if (
+                    player.dy > 0 && // Only check when falling
+                    player.x < p.x + p.width &&
+                    player.x + player.width > p.x &&
+                    player.y + player.height > p.y &&
+                    player.y + player.height < p.y + p.height // Head hit top of platform
+                ) {
+                    player.dy = player.jumpPower; // Jump!
+                    player.onPlatform = true;
+                    tg.HapticFeedback.impactOccurred('light'); // Vibration on jump
+                }
+            });
 
-        function changeDir(newDx, newDy) {
-            if (isGameOver) return;
-            // Запрет разворота на 180 градусов
-            if ((newDx === -dx && newDx !== 0) || (newDy === -dy && newDy !== 0)) return;
+            // Remove old platforms and generate new ones
+            for (let i = 0; i < platforms.length; i++) {
+                if (platforms[i].y + cameraY > GAME_HEIGHT) {
+                    platforms.splice(i, 1);
+                    i--; // Adjust index after splice
+                    generateRandomPlatform();
+                }
+            }
             
-            dx = newDx;
-            dy = newDy;
+            // Game over condition
+            if (player.y - cameraY > GAME_HEIGHT) {
+                gameOver = true;
+                clearInterval(gameInterval);
+                tg.HapticFeedback.notificationOccurred('error');
+                alert(`Игра окончена! Ваш счет: ${score}`);
+                startScreen.style.display = 'flex';
+                // Reset score text on start screen
+                startScreen.querySelector('h1').textContent = `Ваш счет: ${score}`;
+            }
+
+            drawGame();
+        }
+
+        // --- Input Handling ---
+        let currentDirection = 0; // -1 for left, 1 for right, 0 for stop
+
+        function setDirection(dir) {
+            currentDirection = dir;
+            player.dx = currentDirection * 5; // Adjust speed
             tg.HapticFeedback.impactOccurred('light');
         }
 
-        // Управление кнопками (Touch + Click)
-        const setupBtn = (id, ndx, ndy) => {
-            const el = document.getElementById(id);
-            const action = (e) => {
-                e.preventDefault();
-                changeDir(ndx, ndy);
-            };
-            el.addEventListener('touchstart', action, {passive: false});
-            el.addEventListener('click', action);
-        };
+        function stopDirection() {
+            currentDirection = 0;
+            player.dx = 0;
+        }
 
-        setupBtn('up', 0, -1);
-        setupBtn('down', 0, 1);
-        setupBtn('left', -1, 0);
-        setupBtn('right', 1, 0);
+        // Mobile controls
+        leftButton.addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(-1); }, {passive: false});
+        leftButton.addEventListener('touchend', stopDirection);
+        leftButton.addEventListener('click', () => setDirection(-1)); // Fallback for click (desktop testing)
+        
+        rightButton.addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(1); }, {passive: false});
+        rightButton.addEventListener('touchend', stopDirection);
+        rightButton.addEventListener('click', () => setDirection(1)); // Fallback for click (desktop testing)
 
-        // Управление клавиатурой
+
+        // Keyboard controls (for desktop testing)
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowUp') changeDir(0, -1);
-            if (e.key === 'ArrowDown') changeDir(0, 1);
-            if (e.key === 'ArrowLeft') changeDir(-1, 0);
-            if (e.key === 'ArrowRight') changeDir(1, 0);
+            if (e.key === 'ArrowLeft') setDirection(-1);
+            if (e.key === 'ArrowRight') setDirection(1);
         });
 
-        startBtn.addEventListener('click', initGame);
-        
-        // Рисуем начальный кадр
-        ctx.fillStyle = "#f0f0f0";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') stopDirection();
+        });
+
+        // Start button handler
+        startButton.addEventListener('click', initGame);
+
+        // Initial draw
+        drawGame();
     </script>
 </body>
 </html>

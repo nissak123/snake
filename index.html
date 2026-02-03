@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Jump Challenge Fixed</title>
+    <title>Doodle Jump Fixed</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -31,44 +31,57 @@
             border: 2px solid #ddd;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            z-index: 1;
         }
         #score {
             position: absolute;
             top: 15px; left: 15px;
             font-size: 26px; font-weight: 900; color: #333;
             z-index: 5;
+            pointer-events: none;
         }
         #startScreen {
             position: absolute;
-            inset: 0;
-            background: rgba(255,255,255,0.8);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10;
+            z-index: 100; /* Самый высокий при старте */
         }
         #start-button {
-            padding: 18px 35px;
+            padding: 20px 40px;
             background: var(--tg-btn);
             color: var(--tg-btn-text);
             border: none;
             border-radius: 15px;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         #controls {
             display: flex;
             gap: 60px;
             margin-top: 25px;
+            z-index: 10; /* Кнопки должны быть выше канваса */
         }
         .btn {
-            width: 75px; height: 75px;
+            width: 80px; height: 80px;
             background: var(--tg-btn);
             border-radius: 50%;
             border: none;
             color: white;
-            font-size: 30px;
+            font-size: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active {
+            transform: scale(0.9);
+            filter: brightness(1.1);
         }
     </style>
 </head>
@@ -96,6 +109,7 @@
         const ctx = canvas.getContext('2d');
         const scoreDiv = document.getElementById('score');
         const startScreen = document.getElementById('startScreen');
+        const startBtn = document.getElementById('start-button');
 
         const playerImg = new Image();
         playerImg.src = 'player.png?v=' + Date.now(); 
@@ -135,23 +149,22 @@
         function createGoldParticles(x, y) {
             for (let i = 0; i < 8; i++) {
                 particles.push({
-                    x: x + player.w / 2,
-                    y: y + player.h,
+                    x: x + player.w / 2, y: y + player.h,
                     vx: (Math.random() - 0.5) * 4,
                     vy: Math.random() * -3 - 1,
-                    life: 40,
-                    size: 4 + Math.random() * 3
+                    life: 40, size: 4 + Math.random() * 3
                 });
             }
         }
 
-        function init() {
+        function init(e) {
+            if(e) e.stopPropagation();
             player.x = 135; player.y = 300; player.dy = 0; player.dx = 0;
             score = 0;
             scoreDiv.textContent = '0';
             particles = [];
             createPlatforms();
-            startScreen.style.display = 'none';
+            startScreen.style.visibility = 'hidden'; // Скрываем полностью
             gameOver = false;
             if(gameInterval) clearInterval(gameInterval);
             gameInterval = setInterval(update, 1000/60);
@@ -167,16 +180,10 @@
             if (player.x < -40) player.x = 320;
             if (player.x > 320) player.x = -40;
 
-            // Логика сложности: МГНОВЕННОЕ уменьшение
             let difficultyTier = Math.floor(score / 1000);
             if (difficultyTier > lastDifficultyTier) {
-                currentPlatformWidth *= 0.5; // Уменьшаем ширину для будущих платформ
-                
-                // Мгновенно уменьшаем все платформы, которые уже на экране!
-                platforms.forEach(p => {
-                    p.w = currentPlatformWidth;
-                });
-
+                currentPlatformWidth *= 0.5;
+                platforms.forEach(p => p.w = currentPlatformWidth);
                 lastDifficultyTier = difficultyTier;
                 tg.HapticFeedback.notificationOccurred('success');
             }
@@ -207,7 +214,7 @@
                         p.y = -20;
                         p.x = Math.random() * (320 - currentPlatformWidth);
                         p.mv = Math.random() > 0.5 ? (Math.random() - 0.5) * (4 + difficultyTier) : 0;
-                        p.w = currentPlatformWidth; // Убеждаемся, что новая платформа нужного размера
+                        p.w = currentPlatformWidth;
                     }
                 });
                 particles.forEach(part => part.y += offset);
@@ -218,7 +225,7 @@
                 clearInterval(gameInterval);
                 tg.HapticFeedback.notificationOccurred('error');
                 alert("Game Over! Твой рекорд: " + score);
-                startScreen.style.display = 'flex';
+                startScreen.style.visibility = 'visible';
             }
 
             for (let i = particles.length - 1; i >= 0; i--) {
@@ -227,7 +234,6 @@
                 part.vy += 0.15; part.life--;
                 if (part.life <= 0) particles.splice(i, 1);
             }
-
             draw();
         }
 
@@ -237,7 +243,6 @@
                 ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
                 ctx.fillRect(p.x, p.y, p.w, p.h);
             });
-
             particles.forEach(part => {
                 ctx.globalAlpha = part.life / 40;
                 ctx.fillStyle = "#FFD700";
@@ -246,7 +251,6 @@
                 ctx.fill();
                 ctx.globalAlpha = 1;
             });
-
             if (playerImg.complete && playerImg.naturalWidth > 0) {
                 ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
             } else {
@@ -255,15 +259,25 @@
             }
         }
 
-        const move = (dir) => { player.dx = dir; };
+        // Исправленное управление
+        const move = (dir) => { 
+            if(!gameOver) {
+                player.dx = dir; 
+                if(dir !== 0) tg.HapticFeedback.impactOccurred('light');
+            }
+        };
+
         const L = document.getElementById('left-btn');
         const R = document.getElementById('right-btn');
 
-        L.onmousedown = L.ontouchstart = (e) => { e.preventDefault(); move(-5); };
-        R.onmousedown = R.ontouchstart = (e) => { e.preventDefault(); move(5); };
-        window.onmouseup = window.ontouchend = () => move(0);
+        // Поддержка и Touch (телефоны), и Mouse (ПК)
+        L.onpointerdown = (e) => { e.preventDefault(); move(-5); };
+        R.onpointerdown = (e) => { e.preventDefault(); move(5); };
+        window.onpointerup = () => move(0);
 
-        document.getElementById('start-button').onclick = init;
+        startBtn.addEventListener('click', init);
+        startBtn.addEventListener('touchstart', init);
+
         draw();
     </script>
 </body>

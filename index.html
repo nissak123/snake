@@ -232,7 +232,7 @@
 
             lastDifficultyTier = 0;
 
-            platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0 });
+            platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0, breakable: false, broken: false });
 
             for(let i = 1; i < 7; i++) {
 
@@ -248,6 +248,8 @@
 
             const isMoving = Math.random() > 0.6;
 
+            const isBreakable = Math.random() > 0.7; // 30% шанс рассыпающейся платформы
+
             platforms.push({
 
                 x: Math.random() * (320 - currentPlatformWidth),
@@ -258,7 +260,11 @@
 
                 h: 12,
 
-                mv: isMoving ? (Math.random() - 0.5) * 4 : 0
+                mv: isMoving ? (Math.random() - 0.5) * 4 : 0,
+
+                breakable: isBreakable,
+
+                broken: false
 
             });
 
@@ -282,7 +288,37 @@
 
                     life: 40,
 
-                    size: 4 + Math.random() * 3
+                    size: 4 + Math.random() * 3,
+
+                    color: "#FFD700"
+
+                });
+
+            }
+
+        }
+
+
+
+        function createBreakParticles(p) {
+
+            for (let i = 0; i < 12; i++) {
+
+                particles.push({
+
+                    x: p.x + p.w / 2,
+
+                    y: p.y + p.h / 2,
+
+                    vx: (Math.random() - 0.5) * 6,
+
+                    vy: (Math.random() - 0.5) * 6,
+
+                    life: 30,
+
+                    size: 3 + Math.random() * 2,
+
+                    color: "#8B4513"
 
                 });
 
@@ -360,6 +396,10 @@
 
             platforms.forEach(p => {
 
+                if (p.broken) return; // Игнорируем сломанные платформы
+
+
+
                 if (p.mv !== 0) {
 
                     p.x += p.mv;
@@ -378,13 +418,31 @@
 
                     player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
 
-                    player.dy = -10;
+                    
 
-                    score += 20; 
+                    if (p.breakable && !p.broken) {
 
-                    tg.HapticFeedback.impactOccurred('medium');
+                        // Рассыпающаяся платформа ломается
 
-                    createGoldParticles(player.x, player.y);
+                        p.broken = true;
+
+                        createBreakParticles(p);
+
+                        tg.HapticFeedback.impactOccurred('heavy');
+
+                    } else if (!p.broken) {
+
+                        // Обычный прыжок
+
+                        player.dy = -10;
+
+                        score += 20; 
+
+                        tg.HapticFeedback.impactOccurred('medium');
+
+                        createGoldParticles(player.x, player.y);
+
+                    }
 
                 }
 
@@ -413,6 +471,10 @@
                         p.x = Math.random() * (320 - currentPlatformWidth);
 
                         p.mv = Math.random() > 0.5 ? (Math.random() - 0.5) * (4 + difficultyTier) : 0;
+
+                        p.breakable = Math.random() > 0.7;
+
+                        p.broken = false;
 
                     }
 
@@ -464,11 +526,41 @@
 
             ctx.clearRect(0, 0, 320, 500);
 
+            
+
             platforms.forEach(p => {
 
-                ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+                if (p.broken) return; // Не рисуем сломанные платформы
 
-                ctx.fillRect(p.x, p.y, p.w, p.h);
+
+
+                // Рисуем овальные платформы
+
+                ctx.beginPath();
+
+                ctx.ellipse(p.x + p.w / 2, p.y + p.h / 2, p.w / 2, p.h / 2, 0, 0, Math.PI * 2);
+
+                
+
+                if (p.breakable) {
+
+                    ctx.fillStyle = "#8B4513"; // Коричневый для рассыпающихся
+
+                } else if (p.mv !== 0) {
+
+                    ctx.fillStyle = "#ff4444"; // Красный для движущихся
+
+                } else {
+
+                    ctx.fillStyle = "#2e7d32"; // Зеленый для обычных
+
+                }
+
+                
+
+                ctx.fill();
+
+                ctx.closePath();
 
             });
 
@@ -478,7 +570,7 @@
 
                 ctx.globalAlpha = part.life / 40;
 
-                ctx.fillStyle = "#FFD700";
+                ctx.fillStyle = part.color;
 
                 ctx.beginPath();
 

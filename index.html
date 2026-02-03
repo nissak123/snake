@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Jump My Photo</title>
+    <title>Doodle Jump Photo Gold</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -21,7 +21,7 @@
             justify-content: center;
             height: 100vh;
             overflow: hidden;
-            touch-action: none;
+            touch-action: none; /* Отключаем системные жесты */
         }
         #gameContainer {
             position: relative;
@@ -95,29 +95,50 @@
         const scoreDiv = document.getElementById('score');
         const startScreen = document.getElementById('startScreen');
 
-        // ВАЖНО: Файл в папке должен называться точно player.png
         const playerImg = new Image();
-        playerImg.src = 'player.png?v=' + Date.now(); // Добавили случайное число, чтобы обойти кэш
+        playerImg.src = 'player.png?v=' + Date.now(); 
 
         let player = { x: 135, y: 300, w: 55, h: 55, dx: 0, dy: 0 };
         let platforms = [];
+        let particles = []; // Массив для золотых частиц
         let score = 0;
         let gameOver = true;
         let gameInterval;
 
-        function init() {
-            player.x = 135; player.y = 300; player.dy = 0; player.dx = 0;
-            score = 0;
-            scoreDiv.textContent = '0';
+        function createPlatforms() {
             platforms = [];
             platforms.push({ x: 110, y: 400, w: 100, h: 15 });
             for(let i = 1; i < 7; i++) {
                 platforms.push({ x: Math.random() * 240, y: 400 - (i * 80), w: 60, h: 12 });
             }
+        }
+
+        function init() {
+            player.x = 135; player.y = 300; player.dy = 0; player.dx = 0;
+            score = 0;
+            scoreDiv.textContent = '0';
+            particles = []; // Очищаем частицы при старте новой игры
+            createPlatforms();
             startScreen.style.display = 'none';
             gameOver = false;
             if(gameInterval) clearInterval(gameInterval);
             gameInterval = setInterval(update, 1000/60);
+        }
+
+        // --- Функция создания золотых частиц ---
+        function createGoldParticles(x, y) {
+            const numParticles = 5 + Math.floor(Math.random() * 5); // От 5 до 9 частиц
+            for (let i = 0; i < numParticles; i++) {
+                particles.push({
+                    x: x + player.w / 2 + (Math.random() - 0.5) * 10, // Центр персонажа
+                    y: y + player.h, // Из-под персонажа
+                    vx: (Math.random() - 0.5) * 3, // Горизонтальная скорость
+                    vy: Math.random() * -2 - 1, // Вертикальная скорость (вверх)
+                    life: 60 + Math.random() * 30, // Время жизни в кадрах (около 1-1.5 секунды)
+                    color: 'gold',
+                    size: 3 + Math.random() * 3 // Размер частицы
+                });
+            }
         }
 
         function update() {
@@ -136,6 +157,7 @@
                         player.y + player.h > p.y && player.y + player.h < p.y + p.h + 10) {
                         player.dy = -9;
                         tg.HapticFeedback.impactOccurred('light');
+                        createGoldParticles(player.x, player.y); // Создаем частицы при прыжке
                     }
                 });
             }
@@ -152,6 +174,8 @@
                         p.x = Math.random() * 240;
                     }
                 });
+                // Сдвигаем частицы вместе с фоном
+                particles.forEach(part => part.y += offset);
             }
 
             if (player.y > 500) {
@@ -161,11 +185,25 @@
                 alert("Конец игры! Счет: " + score);
                 startScreen.style.display = 'flex';
             }
+
+            // --- Обновление и удаление частиц ---
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let part = particles[i];
+                part.x += part.vx;
+                part.y += part.vy;
+                part.vy += 0.1; // Гравитация для частиц
+                part.life--;
+                if (part.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
             draw();
         }
 
         function draw() {
             ctx.clearRect(0, 0, 320, 500);
+            
             ctx.fillStyle = "#2e7d32";
             platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
@@ -174,10 +212,18 @@
             } else {
                 ctx.fillStyle = "orange";
                 ctx.fillRect(player.x, player.y, player.w, player.h);
-                // Подсказка на экране (видна только в режиме разработки)
+                // Подсказка на экране, если картинка не найдена
                 ctx.fillStyle = "black";
                 ctx.fillText("Картинка player.png не найдена", 10, 480);
             }
+
+            // --- Отрисовка частиц ---
+            particles.forEach(part => {
+                ctx.globalAlpha = part.life / 60; // Чем меньше жизнь, тем прозрачнее
+                ctx.fillStyle = part.color;
+                ctx.fillRect(part.x, part.y, part.size, part.size);
+                ctx.globalAlpha = 1; // Возвращаем полную непрозрачность
+            });
         }
 
         const move = (dir) => { player.dx = dir; if(dir !== 0) tg.HapticFeedback.impactOccurred('light'); };
@@ -185,9 +231,15 @@
         const L = document.getElementById('left-btn');
         const R = document.getElementById('right-btn');
 
-        L.onmousedown = L.ontouchstart = (e) => { e.preventDefault(); move(-5); };
-        R.onmousedown = R.ontouchstart = (e) => { e.preventDefault(); move(5); };
-        window.onmouseup = window.ontouchend = () => move(0);
+        ['touchstart', 'mousedown'].forEach(evt => {
+            L.addEventListener(evt, (e) => { e.preventDefault(); move(-5); });
+            R.addEventListener(evt, (e) => { e.preventDefault(); move(5); });
+        });
+
+        ['touchend', 'mouseup', 'mouseleave'].forEach(evt => {
+            L.addEventListener(evt, () => move(0));
+            R.addEventListener(evt, () => move(0));
+        });
 
         document.getElementById('start-button').onclick = init;
         draw();

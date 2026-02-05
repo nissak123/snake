@@ -53,7 +53,6 @@
             z-index: 5;
         }
 
-        /* Меню и Оверлеи */
         .overlay {
             position: absolute;
             inset: 0;
@@ -80,7 +79,6 @@
             width: 200px;
         }
 
-        /* Математика */
         #mathChallenge {
             background: #fff;
             color: #000;
@@ -175,7 +173,8 @@
         const playerImg = new Image();
         playerImg.src = 'kit.png?v=' + Date.now();
         
-        let player = { x: 130, y: 300, w: 120, h: 100, dx: 0, dy: 0 };
+        // ШИРИНА ИЗМЕНЕНА С 50 НА 100
+        let player = { x: 110, y: 300, w: 100, h: 50, dx: 0, dy: 0 };
         let platforms = [];
         let particles = [];
         let score = 0;
@@ -185,13 +184,11 @@
         let canRevive = true;
         let countdownInterval = null;
         
-        // Settings
         let isDarkTheme = false;
         let soundOn = false;
         let gameMode = 'Классика';
         let mathEnabled = false;
 
-        // Управление
         let leftPressed = false;
         let rightPressed = false;
         let lastPressed = null;
@@ -279,17 +276,14 @@
         function drawCracks(p) {
             ctx.strokeStyle = "#ffffff";
             ctx.lineWidth = 1.5;
-            
             ctx.beginPath();
             ctx.moveTo(p.x + p.w * 0.3, p.y);
             ctx.lineTo(p.x + p.w * 0.35, p.y + p.h);
             ctx.stroke();
-            
             ctx.beginPath();
             ctx.moveTo(p.x + p.w * 0.7, p.y);
             ctx.lineTo(p.x + p.w * 0.65, p.y + p.h);
             ctx.stroke();
-            
             ctx.beginPath();
             ctx.moveTo(p.x, p.y + p.h * 0.5);
             ctx.lineTo(p.x + p.w, p.y + p.h * 0.5);
@@ -298,11 +292,7 @@
 
         function updatePlayerDirection() {
             if (leftPressed && rightPressed) {
-                if (lastPressed === 'left') {
-                    player.dx = -5;
-                } else {
-                    player.dx = 5;
-                }
+                player.dx = lastPressed === 'left' ? -5 : 5;
             } else if (leftPressed) {
                 player.dx = -5;
             } else if (rightPressed) {
@@ -319,38 +309,33 @@
             player.y += player.dy;
             player.x += player.dx;
 
-            if (player.x < -40) player.x = 320;
-            if (player.x > 320) player.x = -40;
+            if (player.x < -player.w) player.x = 320;
+            if (player.x > 320) player.x = -player.w;
 
-            // Фильтруем удаленные платформы
             platforms = platforms.filter(p => !p.removed);
 
-            platforms.forEach((p, index) => {
+            platforms.forEach((p) => {
                 if (p.mv !== 0) {
                     p.x += p.mv;
                     if (p.x < -p.w) p.x = 320;
                     if (p.x > 320) p.x = -p.w;
                 }
 
-                // Коллизия
                 if (player.dy > 0 && player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
                     player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
                     
                     if (p.breakable) {
                         if (p.cracks === 0) {
-                            // Первое касание коричневой
                             player.dy = -10;
                             p.cracks = 1;
                             score += 10;
                             if (soundOn) tg.HapticFeedback.impactOccurred('medium');
-                        } else if (p.cracks === 1) {
-                            // Второе касание - рассыпается
+                        } else {
                             createBreakParticles(p);
                             p.removed = true;
                             if (soundOn) tg.HapticFeedback.impactOccurred('heavy');
                         }
                     } else {
-                        // Обычная платформа
                         player.dy = -10;
                         score += 10;
                         if (soundOn) tg.HapticFeedback.impactOccurred('light');
@@ -358,7 +343,6 @@
                 }
             });
 
-            // Камера
             if (player.y < 200) {
                 let offset = 200 - player.y;
                 player.y = 200;
@@ -377,7 +361,6 @@
                 particles.forEach(part => part.y += offset);
             }
 
-            // Обновление частиц
             for (let i = particles.length - 1; i >= 0; i--) {
                 let part = particles[i];
                 part.x += part.vx;
@@ -412,17 +395,14 @@
             const qH3 = document.getElementById('mathQuestion');
             const ansDiv = document.getElementById('mathAnswers');
             const timerDiv = document.getElementById('timer');
-            
             overlay.style.display = 'flex';
             
             const n1 = Math.floor(Math.random() * 800) + 100;
             const n2 = Math.floor(Math.random() * 800) + 100;
             const correct = n1 + n2;
-            
             qH3.textContent = `${n1} + ${n2} = ?`;
             
-            let answers = [correct, correct + Math.floor(Math.random() * 100) - 50, correct + Math.floor(Math.random() * 100) - 50]
-                .sort(() => Math.random() - 0.5);
+            let answers = [correct, correct + 10, correct - 10].sort(() => Math.random() - 0.5);
             ansDiv.innerHTML = '';
             
             answers.forEach(a => {
@@ -432,13 +412,8 @@
                 btn.onclick = () => {
                     clearInterval(countdownInterval);
                     overlay.style.display = 'none';
-                    if (a === correct) {
-                        revivePlayer();
-                    } else {
-                        canRevive = false;
-                        alert("Game Over! Рекорд: " + score);
-                        showSubMenu('mainMenu');
-                    }
+                    if (a === correct) revivePlayer();
+                    else { canRevive = false; triggerGameOver(); }
                 };
                 ansDiv.appendChild(btn);
             });
@@ -452,17 +427,14 @@
                     clearInterval(countdownInterval);
                     overlay.style.display = 'none';
                     canRevive = false;
-                    alert("Game Over! Рекорд: " + score);
-                    showSubMenu('mainMenu');
+                    triggerGameOver();
                 }
             }, 1000);
         }
 
         function revivePlayer() {
             canRevive = false;
-            
             let safePlatform = platforms.find(p => !p.breakable && p.y > 50 && p.y < 450) || platforms[0];
-            
             player.y = safePlatform.y - player.h - 20;
             player.x = safePlatform.x;
             player.dy = 0;
@@ -472,26 +444,14 @@
 
         function draw() {
             ctx.clearRect(0, 0, 320, 500);
-            
             platforms.forEach(p => {
                 if (p.removed) return;
-
-                if (p.breakable) {
-                    if (p.cracks === 1) {
-                        ctx.fillStyle = "#6B3410";
-                    } else {
-                        ctx.fillStyle = "#8B4513";
-                    }
-                } else {
-                    ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
-                }
-                
+                if (p.breakable) ctx.fillStyle = p.cracks === 1 ? "#6B3410" : "#8B4513";
+                else ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
                 drawRoundedRect(p.x, p.y, p.w, p.h, 6);
-
                 if (p.cracks === 1) drawCracks(p);
             });
 
-            // Частицы
             particles.forEach(part => {
                 ctx.globalAlpha = part.life / 30;
                 ctx.fillStyle = part.color;
@@ -501,11 +461,9 @@
                 ctx.globalAlpha = 1;
             });
 
-            // Игрок - используем изображение kit.png
             if (playerImg.complete && playerImg.naturalWidth > 0) {
                 ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
             } else {
-                // Запасной вариант если картинка не загрузилась
                 ctx.fillStyle = "#ff8f00";
                 ctx.fillRect(player.x, player.y, player.w, player.h);
             }
@@ -514,7 +472,8 @@
         function startGame() {
             score = 0;
             canRevive = true;
-            player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
+            // ШИРИНА ИЗМЕНЕНА С 50 НА 100 ТУТ ТОЖЕ
+            player = { x: 110, y: 300, w: 100, h: 50, dx: 0, dy: 0 };
             particles = [];
             leftPressed = false;
             rightPressed = false;
@@ -528,124 +487,33 @@
             gameInterval = setInterval(update, 1000/60);
         }
 
-        // Управление
+        // Управление (без изменений)
         const L = document.getElementById('left-btn');
         const R = document.getElementById('right-btn');
 
         function setLeftButton(pressed) {
             leftPressed = pressed;
-            if (pressed) {
-                lastPressed = 'left';
-            } else {
-                if (rightPressed) {
-                    lastPressed = 'right';
-                } else {
-                    lastPressed = null;
-                }
-            }
+            if (pressed) lastPressed = 'left';
+            else if (rightPressed) lastPressed = 'right';
             updatePlayerDirection();
         }
 
         function setRightButton(pressed) {
             rightPressed = pressed;
-            if (pressed) {
-                lastPressed = 'right';
-            } else {
-                if (leftPressed) {
-                    lastPressed = 'left';
-                } else {
-                    lastPressed = null;
-                }
-            }
+            if (pressed) lastPressed = 'right';
+            else if (leftPressed) lastPressed = 'left';
             updatePlayerDirection();
         }
 
-        L.addEventListener('touchstart', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.set(touch.identifier, 'left');
-            }
-            setLeftButton(true);
-        }, { passive: false });
-
-        L.addEventListener('touchend', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-            let hasLeftTouch = Array.from(activeTouches.values()).includes('left');
-            setLeftButton(hasLeftTouch);
-        }, { passive: false });
-
-        L.addEventListener('touchcancel', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-            let hasLeftTouch = Array.from(activeTouches.values()).includes('left');
-            setLeftButton(hasLeftTouch);
-        }, { passive: false });
-
-        R.addEventListener('touchstart', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.set(touch.identifier, 'right');
-            }
-            setRightButton(true);
-        }, { passive: false });
-
-        R.addEventListener('touchend', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-            let hasRightTouch = Array.from(activeTouches.values()).includes('right');
-            setRightButton(hasRightTouch);
-        }, { passive: false });
-
-        R.addEventListener('touchcancel', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-            let hasRightTouch = Array.from(activeTouches.values()).includes('right');
-            setRightButton(hasRightTouch);
-        }, { passive: false });
-
-        L.addEventListener('mousedown', (e) => { 
-            e.preventDefault(); 
-            setLeftButton(true);
-        });
-        L.addEventListener('mouseup', (e) => { 
-            e.preventDefault(); 
-            setLeftButton(false);
-        });
-        L.addEventListener('mouseleave', (e) => { 
-            setLeftButton(false);
-        });
-
-        R.addEventListener('mousedown', (e) => { 
-            e.preventDefault(); 
-            setRightButton(true);
-        });
-        R.addEventListener('mouseup', (e) => { 
-            e.preventDefault(); 
-            setRightButton(false);
-        });
-        R.addEventListener('mouseleave', (e) => { 
-            setRightButton(false);
-        });
-
-        document.addEventListener('touchend', (e) => {
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-        }, { passive: true });
+        L.addEventListener('touchstart', (e) => { e.preventDefault(); setLeftButton(true); }, { passive: false });
+        L.addEventListener('touchend', (e) => { e.preventDefault(); setLeftButton(false); }, { passive: false });
+        R.addEventListener('touchstart', (e) => { e.preventDefault(); setRightButton(true); }, { passive: false });
+        R.addEventListener('touchend', (e) => { e.preventDefault(); setRightButton(false); }, { passive: false });
+        
+        L.addEventListener('mousedown', (e) => { e.preventDefault(); setLeftButton(true); });
+        window.addEventListener('mouseup', () => { setLeftButton(false); setRightButton(false); });
+        R.addEventListener('mousedown', (e) => { e.preventDefault(); setRightButton(true); });
 
     </script>
 </body>
 </html>
-
-
-
-

@@ -140,6 +140,10 @@
 
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 
+            user-select: none;
+
+            -webkit-user-select: none;
+
         }
 
     </style>
@@ -222,6 +226,18 @@
 
         let lastDifficultyTier = 0;
 
+        
+
+        // Отслеживание состояния кнопок
+
+        let leftPressed = false;
+
+        let rightPressed = false;
+
+        let lastPressed = null;
+
+        let activeTouches = new Map();
+
 
 
         function createPlatforms() {
@@ -248,7 +264,7 @@
 
             const isMoving = Math.random() > 0.6;
 
-            const isBreakable = Math.random() > 0.7; // 30% шанс рассыпающейся платформы
+            const isBreakable = Math.random() > 0.7;
 
             platforms.push({
 
@@ -358,6 +374,40 @@
 
 
 
+        function updatePlayerDirection() {
+
+            // Если обе кнопки зажаты, приоритет у последней нажатой
+
+            if (leftPressed && rightPressed) {
+
+                if (lastPressed === 'left') {
+
+                    player.dx = -5;
+
+                } else {
+
+                    player.dx = 5;
+
+                }
+
+            } else if (leftPressed) {
+
+                player.dx = -5;
+
+            } else if (rightPressed) {
+
+                player.dx = 5;
+
+            } else {
+
+                player.dx = 0;
+
+            }
+
+        }
+
+
+
         function init() {
 
             player.x = 135; player.y = 300; player.dy = 0; player.dx = 0;
@@ -367,6 +417,14 @@
             scoreDiv.textContent = '0';
 
             particles = [];
+
+            leftPressed = false;
+
+            rightPressed = false;
+
+            lastPressed = null;
+
+            activeTouches.clear();
 
             createPlatforms();
 
@@ -410,8 +468,6 @@
 
                 lastDifficultyTier = difficultyTier;
 
-                // Обновляем ширину всех существующих платформ
-
                 platforms.forEach(p => {
 
                     p.w = currentPlatformWidth;
@@ -424,8 +480,6 @@
 
 
 
-            // Удаляем платформы, которые помечены для удаления
-
             platforms = platforms.filter(p => !p.toRemove);
 
 
@@ -435,8 +489,6 @@
                 if (p.mv !== 0) {
 
                     p.x += p.mv;
-
-                    // Платформы двигаются по кругу через экран
 
                     if (p.x < -p.w) p.x = 320;
 
@@ -454,8 +506,6 @@
 
                     if (p.breakable && p.used) {
 
-                        // Второе касание - платформа рассыпается
-
                         createBreakParticles(p);
 
                         p.toRemove = true;
@@ -463,8 +513,6 @@
                         tg.HapticFeedback.impactOccurred('heavy');
 
                     } else {
-
-                        // Первое касание или обычная платформа - прыжок
 
                         player.dy = -10;
 
@@ -478,7 +526,7 @@
 
                         if (p.breakable) {
 
-                            p.used = true; // Помечаем, что использовали один раз
+                            p.used = true;
 
                         }
 
@@ -572,25 +620,21 @@
 
             platforms.forEach(p => {
 
-                // Определяем цвет платформы
-
                 if (p.breakable) {
 
-                    ctx.fillStyle = "#8B4513"; // Коричневый для рассыпающихся
+                    ctx.fillStyle = "#8B4513";
 
                 } else if (p.mv !== 0) {
 
-                    ctx.fillStyle = "#ff4444"; // Красный для движущихся
+                    ctx.fillStyle = "#ff4444";
 
                 } else {
 
-                    ctx.fillStyle = "#2e7d32"; // Зеленый для обычных
+                    ctx.fillStyle = "#2e7d32";
 
                 }
 
                 
-
-                // Рисуем прямоугольник с закругленными углами
 
                 drawRoundedRect(p.x, p.y, p.w, p.h, 6);
 
@@ -632,19 +676,243 @@
 
 
 
-        const move = (dir) => { player.dx = dir; };
-
         const L = document.getElementById('left-btn');
 
         const R = document.getElementById('right-btn');
 
 
 
-        L.onmousedown = L.ontouchstart = (e) => { e.preventDefault(); move(-5); };
+        // Функции для установки состояния кнопок
 
-        R.onmousedown = R.ontouchstart = (e) => { e.preventDefault(); move(5); };
+        function setLeftButton(pressed) {
 
-        window.onmouseup = window.ontouchend = () => move(0);
+            leftPressed = pressed;
+
+            if (pressed) {
+
+                lastPressed = 'left';
+
+            } else {
+
+                // Если отпустили левую, а правая зажата - переключаем lastPressed
+
+                if (rightPressed) {
+
+                    lastPressed = 'right';
+
+                } else {
+
+                    lastPressed = null;
+
+                }
+
+            }
+
+            updatePlayerDirection();
+
+        }
+
+
+
+        function setRightButton(pressed) {
+
+            rightPressed = pressed;
+
+            if (pressed) {
+
+                lastPressed = 'right';
+
+            } else {
+
+                // Если отпустили правую, а левая зажата - переключаем lastPressed
+
+                if (leftPressed) {
+
+                    lastPressed = 'left';
+
+                } else {
+
+                    lastPressed = null;
+
+                }
+
+            }
+
+            updatePlayerDirection();
+
+        }
+
+
+
+        // Обработка касаний для левой кнопки
+
+        L.addEventListener('touchstart', (e) => { 
+
+            e.preventDefault();
+
+            for (let touch of e.changedTouches) {
+
+                activeTouches.set(touch.identifier, 'left');
+
+            }
+
+            setLeftButton(true);
+
+        }, { passive: false });
+
+
+
+        L.addEventListener('touchend', (e) => { 
+
+            e.preventDefault();
+
+            for (let touch of e.changedTouches) {
+
+                activeTouches.delete(touch.identifier);
+
+            }
+
+            let hasLeftTouch = Array.from(activeTouches.values()).includes('left');
+
+            setLeftButton(hasLeftTouch);
+
+        }, { passive: false });
+
+
+
+        L.addEventListener('touchcancel', (e) => { 
+
+            e.preventDefault();
+
+            for (let touch of e.changedTouches) {
+
+                activeTouches.delete(touch.identifier);
+
+            }
+
+            let hasLeftTouch = Array.from(activeTouches.values()).includes('left');
+
+            setLeftButton(hasLeftTouch);
+
+        }, { passive: false });
+
+
+
+        // Обработка касаний для правой кнопки
+
+        R.addEventListener('touchstart', (e) => { 
+
+            e.preventDefault();
+
+            for (let touch of e.changedTouches) {
+
+                activeTouches.set(touch.identifier, 'right');
+
+            }
+
+            setRightButton(true);
+
+        }, { passive: false });
+
+
+
+        R.addEventListener('touchend', (e) => { 
+
+            e.preventDefault();
+
+            for (let touch of e.changedTouches) {
+
+                activeTouches.delete(touch.identifier);
+
+            }
+
+            let hasRightTouch = Array.from(activeTouches.values()).includes('right');
+
+            setRightButton(hasRightTouch);
+
+        }, { passive: false });
+
+
+
+        R.addEventListener('touchcancel', (e) => { 
+
+            e.preventDefault();
+
+            for (let touch of e.changedTouches) {
+
+                activeTouches.delete(touch.identifier);
+
+            }
+
+            let hasRightTouch = Array.from(activeTouches.values()).includes('right');
+
+            setRightButton(hasRightTouch);
+
+        }, { passive: false });
+
+
+
+        // Обработка мыши (для тестирования на ПК)
+
+        L.addEventListener('mousedown', (e) => { 
+
+            e.preventDefault(); 
+
+            setLeftButton(true);
+
+        });
+
+        L.addEventListener('mouseup', (e) => { 
+
+            e.preventDefault(); 
+
+            setLeftButton(false);
+
+        });
+
+        L.addEventListener('mouseleave', (e) => { 
+
+            setLeftButton(false);
+
+        });
+
+
+
+        R.addEventListener('mousedown', (e) => { 
+
+            e.preventDefault(); 
+
+            setRightButton(true);
+
+        });
+
+        R.addEventListener('mouseup', (e) => { 
+
+            e.preventDefault(); 
+
+            setRightButton(false);
+
+        });
+
+        R.addEventListener('mouseleave', (e) => { 
+
+            setRightButton(false);
+
+        });
+
+
+
+        // Глобальный сброс при отпускании пальца вне кнопок
+
+        document.addEventListener('touchend', (e) => {
+
+            for (let touch of e.changedTouches) {
+
+                activeTouches.delete(touch.identifier);
+
+            }
+
+        }, { passive: true });
 
 
 

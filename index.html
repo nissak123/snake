@@ -236,11 +236,9 @@
         }
 
         function addPlatform(yPos) {
-            // --- ЛОГИКА СЛОЖНОСТИ ---
             let difficultyLevel = Math.floor(score / 1000);
-            let breakChance = 0.7 - (difficultyLevel * 0.05); // Чаще ломаются
-            let moveChance = 0.8 - (difficultyLevel * 0.05);  // Чаще двигаются
-            // ------------------------
+            let breakChance = 0.7 - (difficultyLevel * 0.05);
+            let moveChance = 0.8 - (difficultyLevel * 0.05);
 
             const isBreakable = Math.random() > Math.max(0.3, breakChance);
             platforms.push({
@@ -322,10 +320,8 @@
         function update() {
             if(gameOver) return;
 
-            // --- ПЛАВНОЕ УВЕЛИЧЕНИЕ ГРАВИТАЦИИ ---
             let gravityIncr = 0.28 + (Math.floor(score / 1000) * 0.02);
             player.dy += gravityIncr;
-            // -------------------------------------
             
             player.y += player.dy;
             player.x += player.dx;
@@ -365,7 +361,9 @@
             if (player.y < 200) {
                 let offset = 200 - player.y;
                 player.y = 200;
-                let randomMultiplier = Math.floor(Math.random() * (6 - 2 + 1)) + 2;
+                
+                // --- ОБНОВЛЕННЫЙ ДИАПАЗОН ОЧКОВ (4-7) ---
+                let randomMultiplier = Math.floor(Math.random() * (7 - 4 + 1)) + 4;
                 score += Math.floor((offset / 10) * randomMultiplier);
                 
                 if (Math.floor(score / 1000) > lastShrinkThreshold) {
@@ -381,7 +379,7 @@
                     p.y += offset;
                     if (p.y > 500) {
                         p.y = -20;
-                        addPlatform(-20); // Используем функцию с логикой сложности
+                        addPlatform(-20);
                         platforms.splice(platforms.indexOf(p), 1);
                     }
                 });

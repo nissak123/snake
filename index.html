@@ -252,6 +252,21 @@
             });
         }
 
+        // --- НОВАЯ ФУНКЦИЯ ДЛЯ ЗОЛОТЫХ ЧАСТИЦ ---
+        function createGoldParticles(x, y) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() * -3) - 1,
+                    life: 25,
+                    size: 4 + Math.random() * 3,
+                    color: "#FFD700" // Золотой цвет
+                });
+            }
+        }
+
         function createBreakParticles(p) {
             for (let i = 0; i < 12; i++) {
                 particles.push({
@@ -341,6 +356,9 @@
                 if (player.dy > 0 && player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
                     player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
                     
+                    // --- ВЫСЫПАЕМ ЗОЛОТО ПРИ ПРЫЖКЕ ---
+                    createGoldParticles(player.x + player.w/2, player.y + player.h);
+
                     if (p.breakable) {
                         if (p.cracks === 0) {
                             player.dy = -10;
@@ -362,7 +380,6 @@
                 let offset = 200 - player.y;
                 player.y = 200;
                 
-                // --- ОБНОВЛЕННЫЙ ДИАПАЗОН ОЧКОВ (4-7) ---
                 let randomMultiplier = Math.floor(Math.random() * (7 - 4 + 1)) + 4;
                 score += Math.floor((offset / 10) * randomMultiplier);
                 

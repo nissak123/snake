@@ -490,7 +490,7 @@
                 ctx.save();
                 if (!facingRight) {
                     // Зеркальное отражение
-                    ctx.translate(player.x + player.w, player.y);
+                    ctx.translate(player.x + player.w - 10, player.y);
                     ctx.scale(-1, 1);
                     ctx.drawImage(playerImg, 0, 0, player.w, player.h);
                 } else {
@@ -573,3 +573,4 @@
     </script>
 </body>
 </html>
+

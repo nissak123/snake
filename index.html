@@ -14,46 +14,108 @@
             --game-bg: #ffffff;
             --text-color: #333;
         }
-        body.dark-theme { --bg-color: #1a1a1a; --game-bg: #2c2c2c; --text-color: #eee; }
+
+        body.dark-theme {
+            --bg-color: #1a1a1a;
+            --game-bg: #2c2c2c;
+            --text-color: #eee;
+        }
+
         body {
             font-family: 'Arial', sans-serif;
             background-color: var(--bg-color);
-            margin: 0; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            height: 100vh; overflow: hidden; touch-action: none;
-            color: var(--text-color); transition: background 0.3s;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+            color: var(--text-color);
+            transition: background 0.3s;
         }
+
         #gameContainer {
-            position: relative; width: 320px; height: 500px;
-            background-color: var(--game-bg); border: 2px solid #ddd;
-            overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            width: 320px;
+            height: 500px;
+            background-color: var(--game-bg);
+            border: 2px solid #ddd;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
+
         #score {
-            position: absolute; top: 15px; left: 15px;
-            font-size: 26px; font-weight: 900; color: var(--text-color); z-index: 5;
+            position: absolute;
+            top: 15px; left: 15px;
+            font-size: 26px; font-weight: 900; color: var(--text-color);
+            z-index: 5;
         }
+
         .overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.8);
-            display: none; flex-direction: column; align-items: center;
-            justify-content: center; z-index: 20; color: white;
-            text-align: center; padding: 20px;
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            color: white;
+            text-align: center;
+            padding: 20px;
         }
+
         .menu-btn {
-            margin: 10px; padding: 12px 25px; background: var(--tg-btn);
-            color: var(--tg-btn-text); border: none; border-radius: 12px;
-            font-size: 16px; cursor: pointer; width: 200px;
+            margin: 10px;
+            padding: 12px 25px;
+            background: var(--tg-btn);
+            color: var(--tg-btn-text);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 200px;
         }
-        #mathChallenge { background: #fff; color: #000; border-radius: 20px; padding: 20px; width: 80%; }
+
+        #mathChallenge {
+            background: #fff;
+            color: #000;
+            border-radius: 20px;
+            padding: 20px;
+            width: 80%;
+        }
+
         .ans-btn {
-            display: block; width: 100%; margin: 10px 0; padding: 10px;
-            background: #eee; border: 2px solid var(--tg-btn); border-radius: 10px; font-weight: bold;
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            background: #eee;
+            border: 2px solid var(--tg-btn);
+            border-radius: 10px;
+            font-weight: bold;
         }
+
         #timer { font-size: 24px; color: red; margin-bottom: 10px; }
-        #controls { display: flex; gap: 60px; margin-top: 25px; }
+
+        #controls {
+            display: flex;
+            gap: 60px;
+            margin-top: 25px;
+        }
+
         .btn {
-            width: 75px; height: 75px; background: var(--tg-btn); border-radius: 50%;
-            border: none; color: white; font-size: 30px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); user-select: none;
+            width: 75px; height: 75px;
+            background: var(--tg-btn);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            user-select: none;
+            -webkit-user-select: none;
         }
     </style>
 </head>
@@ -101,7 +163,8 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
+        tg.ready();
+        tg.expand();
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -110,8 +173,8 @@
         const playerImg = new Image();
         playerImg.src = 'kit.png?v=' + Date.now();
         
-        let player = { x: 110, y: 300, w: 100, h: 50, dx: 0, dy: 0 };
-        let facingRight = true; 
+        let player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
+        let facingRight = true; // Новая переменная для поворота
         let platforms = [];
         let particles = [];
         let score = 0;
@@ -129,11 +192,14 @@
         let leftPressed = false;
         let rightPressed = false;
         let lastPressed = null;
+        let activeTouches = new Map();
 
         function showSubMenu(menuId) {
             document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
             document.getElementById(menuId).style.display = 'flex';
-            if(menuId === 'achievementsMenu') document.getElementById('highScoreText').textContent = `Макс. результат: ${highScore}`;
+            if(menuId === 'achievementsMenu') {
+                document.getElementById('highScoreText').textContent = `Макс. результат: ${highScore}`;
+            }
         }
 
         function toggleTheme() {
@@ -160,29 +226,34 @@
         function createPlatforms() {
             platforms = [];
             platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0, breakable: false, cracks: 0 });
-            let currentY = 420;
             for(let i = 1; i < 7; i++) {
-                // Расстояние между платформами теперь от 80 до 120
-                currentY -= (Math.floor(Math.random() * 41) + 80); 
-                addPlatform(currentY);
+                addPlatform(420 - (i * 80));
             }
         }
 
         function addPlatform(yPos) {
             const isBreakable = Math.random() > 0.7;
             platforms.push({
-                x: Math.random() * (320 - 70), y: yPos, w: 70, h: 12,
+                x: Math.random() * (320 - 70),
+                y: yPos,
+                w: 70,
+                h: 12,
                 mv: Math.random() > 0.8 ? (Math.random() - 0.5) * 4 : 0,
-                breakable: isBreakable, cracks: 0
+                breakable: isBreakable,
+                cracks: 0
             });
         }
 
         function createBreakParticles(p) {
             for (let i = 0; i < 12; i++) {
                 particles.push({
-                    x: p.x + p.w / 2, y: p.y + p.h / 2,
-                    vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
-                    life: 30, size: 3 + Math.random() * 2, color: "#8B4513"
+                    x: p.x + p.w / 2,
+                    y: p.y + p.h / 2,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    life: 30,
+                    size: 3 + Math.random() * 2,
+                    color: "#8B4513"
                 });
             }
         }
@@ -203,20 +274,43 @@
         }
 
         function drawCracks(p) {
-            ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(p.x + p.w * 0.3, p.y); ctx.lineTo(p.x + p.w * 0.35, p.y + p.h); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(p.x + p.w * 0.7, p.y); ctx.lineTo(p.x + p.w * 0.65, p.y + p.h); ctx.stroke();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1.5;
+            
+            ctx.beginPath();
+            ctx.moveTo(p.x + p.w * 0.3, p.y);
+            ctx.lineTo(p.x + p.w * 0.35, p.y + p.h);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(p.x + p.w * 0.7, p.y);
+            ctx.lineTo(p.x + p.w * 0.65, p.y + p.h);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y + p.h * 0.5);
+            ctx.lineTo(p.x + p.w, p.y + p.h * 0.5);
+            ctx.stroke();
         }
 
         function updatePlayerDirection() {
-            if (leftPressed && rightPressed) player.dx = lastPressed === 'left' ? -5 : 5;
-            else if (leftPressed) player.dx = -5;
-            else if (rightPressed) player.dx = 5;
-            else player.dx = 0;
+            if (leftPressed && rightPressed) {
+                if (lastPressed === 'left') {
+                    player.dx = -5;
+                } else {
+                    player.dx = 5;
+                }
+            } else if (leftPressed) {
+                player.dx = -5;
+            } else if (rightPressed) {
+                player.dx = 5;
+            } else {
+                player.dx = 0;
+            }
 
-            // Инвертированная ориентация поворота
-            if (player.dx > 0) facingRight = false; // Было true
-            else if (player.dx < 0) facingRight = true; // Было false
+            // Обновление направления взгляда
+            if (player.dx > 0) facingRight = false;
+            else if (player.dx < 0) facingRight = true;
         }
 
         function update() {
@@ -226,37 +320,35 @@
             player.y += player.dy;
             player.x += player.dx;
 
-            if (player.x < -player.w) player.x = 320;
-            if (player.x > 320) player.x = -player.w;
+            if (player.x < -40) player.x = 320;
+            if (player.x > 320) player.x = -40;
 
             platforms = platforms.filter(p => !p.removed);
 
-            platforms.forEach((p) => {
+            platforms.forEach((p, index) => {
                 if (p.mv !== 0) {
                     p.x += p.mv;
                     if (p.x < -p.w) p.x = 320;
                     if (p.x > 320) p.x = -p.w;
                 }
 
-                // Хитбоксы (настрой эти числа под свою картинку)
-                const paddingLeft = 35; 
-                const paddingRight = 35;
-
-                if (player.dy > 0 && 
-                    (player.x + paddingLeft) < (p.x + p.w) && 
-                    (player.x + player.w - paddingRight) > p.x &&
+                if (player.dy > 0 && player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
                     player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
                     
                     if (p.breakable) {
                         if (p.cracks === 0) {
-                            player.dy = -10; p.cracks = 1;
+                            player.dy = -10;
+                            p.cracks = 1;
+                            score += 10;
                             if (soundOn) tg.HapticFeedback.impactOccurred('medium');
-                        } else {
-                            createBreakParticles(p); p.removed = true;
+                        } else if (p.cracks === 1) {
+                            createBreakParticles(p);
+                            p.removed = true;
                             if (soundOn) tg.HapticFeedback.impactOccurred('heavy');
                         }
                     } else {
                         player.dy = -10;
+                        score += 10;
                         if (soundOn) tg.HapticFeedback.impactOccurred('light');
                     }
                 }
@@ -264,13 +356,17 @@
 
             if (player.y < 200) {
                 let offset = 200 - player.y;
-                player.y = 200; score += 1; scoreDiv.textContent = score;
+                player.y = 200;
+                score += Math.floor(offset / 10);
+                scoreDiv.textContent = score;
                 platforms.forEach(p => {
                     p.y += offset;
                     if (p.y > 500) {
-                        p.y = - (Math.floor(Math.random() * 41) + 20); // Платформы спавнятся выше
+                        p.y = -20;
                         p.x = Math.random() * (320 - 70);
-                        p.breakable = Math.random() > 0.7; p.cracks = 0; p.removed = false;
+                        p.breakable = Math.random() > 0.7;
+                        p.cracks = 0;
+                        p.removed = false;
                     }
                 });
                 particles.forEach(part => part.y += offset);
@@ -278,7 +374,10 @@
 
             for (let i = particles.length - 1; i >= 0; i--) {
                 let part = particles[i];
-                part.x += part.vx; part.y += part.vy; part.vy += 0.15; part.life--;
+                part.x += part.vx;
+                part.y += part.vy;
+                part.vy += 0.15;
+                part.life--;
                 if (part.life <= 0) particles.splice(i, 1);
             }
 
@@ -287,61 +386,110 @@
         }
 
         function triggerGameOver() {
-            gameOver = true; clearInterval(gameInterval);
-            if (score > highScore) { highScore = score; localStorage.setItem('doodle_highscore', highScore); }
-            if (mathEnabled && canRevive) showMathChallenge();
-            else { alert("Game Over! Рекорд: " + score); showSubMenu('mainMenu'); }
+            gameOver = true;
+            clearInterval(gameInterval);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('doodle_highscore', highScore);
+            }
+
+            if (mathEnabled && canRevive) {
+                showMathChallenge();
+            } else {
+                alert("Game Over! Рекорд: " + score);
+                showSubMenu('mainMenu');
+            }
         }
 
         function showMathChallenge() {
             const overlay = document.getElementById('mathOverlay');
+            const qH3 = document.getElementById('mathQuestion');
+            const ansDiv = document.getElementById('mathAnswers');
+            const timerDiv = document.getElementById('timer');
+            
             overlay.style.display = 'flex';
+            
             const n1 = Math.floor(Math.random() * 800) + 100;
             const n2 = Math.floor(Math.random() * 800) + 100;
             const correct = n1 + n2;
-            document.getElementById('mathQuestion').textContent = `${n1} + ${n2} = ?`;
-            let answers = [correct, correct + 10, correct - 10].sort(() => Math.random() - 0.5);
-            const ansDiv = document.getElementById('mathAnswers');
+            
+            qH3.textContent = `${n1} + ${n2} = ?`;
+            
+            let answers = [correct, correct + Math.floor(Math.random() * 100) - 50, correct + Math.floor(Math.random() * 100) - 50]
+                .sort(() => Math.random() - 0.5);
             ansDiv.innerHTML = '';
+            
             answers.forEach(a => {
-                const btn = document.createElement('button'); btn.className = 'ans-btn'; btn.textContent = a;
+                const btn = document.createElement('button');
+                btn.className = 'ans-btn';
+                btn.textContent = a;
                 btn.onclick = () => {
-                    clearInterval(countdownInterval); overlay.style.display = 'none';
-                    if (a === correct) revivePlayer(); else { canRevive = false; triggerGameOver(); }
+                    clearInterval(countdownInterval);
+                    overlay.style.display = 'none';
+                    if (a === correct) {
+                        revivePlayer();
+                    } else {
+                        canRevive = false;
+                        alert("Game Over! Рекорд: " + score);
+                        showSubMenu('mainMenu');
+                    }
                 };
                 ansDiv.appendChild(btn);
             });
-            let timeLeft = 3; document.getElementById('timer').textContent = timeLeft;
+
+            let timeLeft = 3;
+            timerDiv.textContent = timeLeft;
             countdownInterval = setInterval(() => {
-                timeLeft--; document.getElementById('timer').textContent = timeLeft;
-                if (timeLeft <= 0) { clearInterval(countdownInterval); overlay.style.display = 'none'; canRevive = false; triggerGameOver(); }
+                timeLeft--;
+                timerDiv.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    overlay.style.display = 'none';
+                    canRevive = false;
+                    alert("Game Over! Рекорд: " + score);
+                    showSubMenu('mainMenu');
+                }
             }, 1000);
         }
 
         function revivePlayer() {
             canRevive = false;
-            let safePlatform = platforms.find(p => !p.breakable && p.y > 100 && p.y < 400) || platforms[0];
-            player.y = safePlatform.y - player.h - 20; player.x = safePlatform.x - 15; player.dy = 0;
-            gameOver = false; gameInterval = setInterval(update, 1000/60);
+            let safePlatform = platforms.find(p => !p.breakable && p.y > 50 && p.y < 450) || platforms[0];
+            player.y = safePlatform.y - player.h - 20;
+            player.x = safePlatform.x;
+            player.dy = 0;
+            gameOver = false;
+            gameInterval = setInterval(update, 1000/60);
         }
 
         function draw() {
             ctx.clearRect(0, 0, 320, 500);
+            
             platforms.forEach(p => {
                 if (p.removed) return;
-                if (p.breakable) ctx.fillStyle = p.cracks === 1 ? "#6B3410" : "#8B4513";
-                else ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+                if (p.breakable) {
+                    ctx.fillStyle = (p.cracks === 1) ? "#6B3410" : "#8B4513";
+                } else {
+                    ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+                }
                 drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                 if (p.cracks === 1) drawCracks(p);
             });
+
             particles.forEach(part => {
-                ctx.globalAlpha = part.life / 30; ctx.fillStyle = part.color;
-                ctx.beginPath(); ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+                ctx.globalAlpha = part.life / 30;
+                ctx.fillStyle = part.color;
+                ctx.beginPath();
+                ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
             });
 
-            if (playerImg.complete) {
+            // Игрок с поворотом
+            if (playerImg.complete && playerImg.naturalWidth > 0) {
                 ctx.save();
                 if (!facingRight) {
+                    // Зеркальное отражение
                     ctx.translate(player.x + player.w, player.y);
                     ctx.scale(-1, 1);
                     ctx.drawImage(playerImg, 0, 0, player.w, player.h);
@@ -350,32 +498,78 @@
                 }
                 ctx.restore();
             } else {
-                ctx.fillStyle = "#ff8f00"; ctx.fillRect(player.x + 25, player.y, 50, 50);
+                ctx.fillStyle = "#ff8f00";
+                ctx.fillRect(player.x, player.y, player.w, player.h);
             }
         }
 
         function startGame() {
-            score = 0; canRevive = true;
-            player = { x: 110, y: 300, w: 100, h: 50, dx: 0, dy: 0 };
+            score = 0;
+            canRevive = true;
+            player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
             facingRight = true;
-            particles = []; leftPressed = false; rightPressed = false; lastPressed = null;
-            scoreDiv.textContent = '0'; createPlatforms();
+            particles = [];
+            leftPressed = false;
+            rightPressed = false;
+            lastPressed = null;
+            activeTouches.clear();
+            scoreDiv.textContent = '0';
+            createPlatforms();
             document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
-            gameOver = false; if(gameInterval) clearInterval(gameInterval);
+            gameOver = false;
+            if(gameInterval) clearInterval(gameInterval);
             gameInterval = setInterval(update, 1000/60);
         }
 
         const L = document.getElementById('left-btn');
         const R = document.getElementById('right-btn');
-        function setLeft(p) { leftPressed = p; if (p) lastPressed = 'left'; updatePlayerDirection(); }
-        function setRight(p) { rightPressed = p; if (p) lastPressed = 'right'; updatePlayerDirection(); }
-        L.addEventListener('touchstart', (e) => { e.preventDefault(); setLeft(true); });
-        L.addEventListener('touchend', (e) => { e.preventDefault(); setLeft(false); });
-        R.addEventListener('touchstart', (e) => { e.preventDefault(); setRight(true); });
-        R.addEventListener('touchend', (e) => { e.preventDefault(); setRight(false); });
-        L.addEventListener('mousedown', (e) => { e.preventDefault(); setLeft(true); });
-        R.addEventListener('mousedown', (e) => { e.preventDefault(); setRight(true); });
-        window.addEventListener('mouseup', () => { setLeft(false); setRight(false); });
+
+        function setLeftButton(pressed) {
+            leftPressed = pressed;
+            if (pressed) lastPressed = 'left';
+            else lastPressed = rightPressed ? 'right' : null;
+            updatePlayerDirection();
+        }
+
+        function setRightButton(pressed) {
+            rightPressed = pressed;
+            if (pressed) lastPressed = 'right';
+            else lastPressed = leftPressed ? 'left' : null;
+            updatePlayerDirection();
+        }
+
+        L.addEventListener('touchstart', (e) => { 
+            e.preventDefault();
+            for (let touch of e.changedTouches) activeTouches.set(touch.identifier, 'left');
+            setLeftButton(true);
+        }, { passive: false });
+
+        L.addEventListener('touchend', (e) => { 
+            e.preventDefault();
+            for (let touch of e.changedTouches) activeTouches.delete(touch.identifier);
+            setLeftButton(Array.from(activeTouches.values()).includes('left'));
+        }, { passive: false });
+
+        R.addEventListener('touchstart', (e) => { 
+            e.preventDefault();
+            for (let touch of e.changedTouches) activeTouches.set(touch.identifier, 'right');
+            setRightButton(true);
+        }, { passive: false });
+
+        R.addEventListener('touchend', (e) => { 
+            e.preventDefault();
+            for (let touch of e.changedTouches) activeTouches.delete(touch.identifier);
+            setRightButton(Array.from(activeTouches.values()).includes('right'));
+        }, { passive: false });
+
+        L.addEventListener('mousedown', (e) => { e.preventDefault(); setLeftButton(true); });
+        L.addEventListener('mouseup', (e) => { e.preventDefault(); setLeftButton(false); });
+        L.addEventListener('mouseleave', () => setLeftButton(false));
+
+        R.addEventListener('mousedown', (e) => { e.preventDefault(); setRightButton(true); });
+        R.addEventListener('mouseup', (e) => { e.preventDefault(); setRightButton(false); });
+        R.addEventListener('mouseleave', () => setRightButton(false));
+
     </script>
 </body>
 </html>

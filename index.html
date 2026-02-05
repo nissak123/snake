@@ -172,6 +172,11 @@
         const ctx = canvas.getContext('2d');
         const scoreDiv = document.getElementById('score');
         
+        // --- ЗАМЕНА КВАДРАТА НА КАРТИНКУ ---
+        const playerImg = new Image();
+        playerImg.src = 'player.png';
+        // ----------------------------------
+
         let player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
         let platforms = [];
         let particles = [];
@@ -498,9 +503,9 @@
                 ctx.globalAlpha = 1;
             });
 
-            // Игрок
-            ctx.fillStyle = "#ff8f00";
-            ctx.fillRect(player.x, player.y, player.w, player.h);
+            // --- ОТРИСОВКА ИГРОКА (КАРТИНКА) ---
+            ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+            // ----------------------------------
         }
 
         function startGame() {

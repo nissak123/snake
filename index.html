@@ -179,8 +179,8 @@
         let platforms = [];
         let particles = [];
         let score = 0;
-        let lastShrinkThreshold = 0; // Для отслеживания тысяч
-        let platformWidth = 70; // Базовая ширина
+        let lastShrinkThreshold = 0; 
+        let platformWidth = 70; 
         let highScore = localStorage.getItem('doodle_highscore') || 0;
         let gameOver = true;
         let gameInterval;
@@ -228,7 +228,7 @@
 
         function createPlatforms() {
             platforms = [];
-            platformWidth = 70; // Сброс при старте
+            platformWidth = 70; 
             platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0, breakable: false, cracks: 0 });
             for(let i = 1; i < 7; i++) {
                 addPlatform(420 - (i * 80));
@@ -236,13 +236,19 @@
         }
 
         function addPlatform(yPos) {
-            const isBreakable = Math.random() > 0.7;
+            // --- ЛОГИКА СЛОЖНОСТИ ---
+            let difficultyLevel = Math.floor(score / 1000);
+            let breakChance = 0.7 - (difficultyLevel * 0.05); // Чаще ломаются
+            let moveChance = 0.8 - (difficultyLevel * 0.05);  // Чаще двигаются
+            // ------------------------
+
+            const isBreakable = Math.random() > Math.max(0.3, breakChance);
             platforms.push({
                 x: Math.random() * (320 - platformWidth),
                 y: yPos,
                 w: platformWidth,
                 h: 12,
-                mv: Math.random() > 0.8 ? (Math.random() - 0.5) * 4 : 0,
+                mv: Math.random() > Math.max(0.4, moveChance) ? (Math.random() - 0.5) * (4 + difficultyLevel) : 0,
                 breakable: isBreakable,
                 cracks: 0
             });
@@ -316,7 +322,11 @@
         function update() {
             if(gameOver) return;
 
-            player.dy += 0.28;
+            // --- ПЛАВНОЕ УВЕЛИЧЕНИЕ ГРАВИТАЦИИ ---
+            let gravityIncr = 0.28 + (Math.floor(score / 1000) * 0.02);
+            player.dy += gravityIncr;
+            // -------------------------------------
+            
             player.y += player.dy;
             player.x += player.dx;
 
@@ -358,26 +368,21 @@
                 let randomMultiplier = Math.floor(Math.random() * (6 - 2 + 1)) + 2;
                 score += Math.floor((offset / 10) * randomMultiplier);
                 
-                // --- ЛОГИКА УМЕНЬШЕНИЯ ПЛАТФОРМ ---
                 if (Math.floor(score / 1000) > lastShrinkThreshold) {
                     lastShrinkThreshold = Math.floor(score / 1000);
-                    platformWidth *= 0.9; // Уменьшаем базовую ширину на 10%
+                    platformWidth *= 0.9; 
                     platforms.forEach(p => {
                         if (!p.removed) p.w *= 0.9;
                     });
                 }
-                // ---------------------------------
 
                 scoreDiv.textContent = score;
                 platforms.forEach(p => {
                     p.y += offset;
                     if (p.y > 500) {
                         p.y = -20;
-                        p.x = Math.random() * (320 - platformWidth);
-                        p.w = platformWidth; // Новые платформы создаются уменьшенными
-                        p.breakable = Math.random() > 0.7;
-                        p.cracks = 0;
-                        p.removed = false;
+                        addPlatform(-20); // Используем функцию с логикой сложности
+                        platforms.splice(platforms.indexOf(p), 1);
                     }
                 });
                 particles.forEach(part => part.y += offset);
@@ -508,7 +513,7 @@
 
         function startGame() {
             score = 0;
-            lastShrinkThreshold = 0; // Сброс порога
+            lastShrinkThreshold = 0; 
             canRevive = true;
             player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
             particles = [];

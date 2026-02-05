@@ -1,639 +1,1565 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Jump Challenge Pro</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --tg-bg: var(--tg-theme-bg-color, #ffffff);
-            --tg-btn: var(--tg-theme-button-color, #2481cc);
-            --tg-btn-text: var(--tg-theme-button-text-color, #ffffff);
-            --bg-color: #f0f0f0;
-            --game-bg: #ffffff;
-            --text-color: #333;
-        }
 
-        body.dark-theme {
-            --bg-color: #1a1a1a;
-            --game-bg: #2c2c2c;
-            --text-color: #eee;
+<html lang="ru">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Doodle Jump Challenge</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+
+        :root {
+
+            --tg-bg: var(--tg-theme-bg-color, #ffffff);
+
+            --tg-btn: var(--tg-theme-button-color, #2481cc);
+
+            --tg-btn-text: var(--tg-theme-button-text-color, #ffffff);
+
         }
 
         body {
+
             font-family: 'Arial', sans-serif;
-            background-color: var(--bg-color);
+
+            background-color: #f0f0f0;
+
             margin: 0;
+
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
+
             justify-content: center;
+
             height: 100vh;
+
             overflow: hidden;
+
             touch-action: none;
-            color: var(--text-color);
-            transition: background 0.3s;
+
+        }
+
+        body.dark-theme {
+
+            background-color: #1a1a1a;
+
         }
 
         #gameContainer {
+
             position: relative;
+
             width: 320px;
+
             height: 500px;
-            background-color: var(--game-bg);
+
+            background-color: #ffffff;
+
             border: 2px solid #ddd;
+
             overflow: hidden;
+
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+        }
+
+        body.dark-theme #gameContainer {
+
+            background-color: #2a2a2a;
+
+            border-color: #444;
+
         }
 
         #score {
+
             position: absolute;
+
             top: 15px; left: 15px;
-            font-size: 26px; font-weight: 900; color: var(--text-color);
+
+            font-size: 26px; font-weight: 900; color: #333;
+
             z-index: 5;
+
         }
 
-        /* Меню и Оверлеи */
-        .overlay {
+        body.dark-theme #score {
+
+            color: #fff;
+
+        }
+
+        #menuButton {
+
             position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
 
-        .menu-btn {
-            margin: 10px;
-            padding: 12px 25px;
+            top: 15px; right: 15px;
+
+            width: 40px; height: 40px;
+
             background: var(--tg-btn);
-            color: var(--tg-btn-text);
+
             border: none;
-            border-radius: 12px;
-            font-size: 16px;
+
+            border-radius: 8px;
+
+            color: white;
+
+            font-size: 24px;
+
+            z-index: 5;
+
             cursor: pointer;
-            width: 200px;
+
         }
 
-        /* Математика */
-        #mathChallenge {
-            background: #fff;
-            color: #000;
-            border-radius: 20px;
-            padding: 20px;
-            width: 80%;
+        #startScreen, #menuScreen {
+
+            position: absolute;
+
+            inset: 0;
+
+            background: rgba(255,255,255,0.95);
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            z-index: 10;
+
         }
 
-        .ans-btn {
-            display: block;
-            width: 100%;
-            margin: 10px 0;
-            padding: 10px;
-            background: #eee;
-            border: 2px solid var(--tg-btn);
-            border-radius: 10px;
+        body.dark-theme #startScreen,
+
+        body.dark-theme #menuScreen {
+
+            background: rgba(42,42,42,0.95);
+
+        }
+
+        #menuScreen {
+
+            display: none;
+
+        }
+
+        .menu-title {
+
+            font-size: 28px;
+
             font-weight: bold;
+
+            margin-bottom: 30px;
+
+            color: #333;
+
         }
 
-        #timer { font-size: 24px; color: red; margin-bottom: 10px; }
+        body.dark-theme .menu-title {
+
+            color: #fff;
+
+        }
+
+        .menu-item {
+
+            width: 280px;
+
+            padding: 15px;
+
+            margin: 8px 0;
+
+            background: #f5f5f5;
+
+            border: 2px solid #ddd;
+
+            border-radius: 10px;
+
+            font-size: 16px;
+
+            color: #333;
+
+        }
+
+        body.dark-theme .menu-item {
+
+            background: #3a3a3a;
+
+            border-color: #555;
+
+            color: #fff;
+
+        }
+
+        .menu-item-header {
+
+            font-weight: bold;
+
+            margin-bottom: 5px;
+
+        }
+
+        .toggle-buttons {
+
+            display: flex;
+
+            gap: 10px;
+
+            margin-top: 8px;
+
+        }
+
+        .toggle-btn {
+
+            flex: 1;
+
+            padding: 8px;
+
+            background: #ddd;
+
+            border: none;
+
+            border-radius: 6px;
+
+            font-size: 14px;
+
+            cursor: pointer;
+
+        }
+
+        .toggle-btn.active {
+
+            background: var(--tg-btn);
+
+            color: white;
+
+        }
+
+        #start-button, #closeMenuBtn {
+
+            padding: 18px 35px;
+
+            background: var(--tg-btn);
+
+            color: var(--tg-btn-text);
+
+            border: none;
+
+            border-radius: 15px;
+
+            font-size: 20px;
+
+            font-weight: bold;
+
+            margin-top: 20px;
+
+            cursor: pointer;
+
+        }
+
+        #mathQuiz {
+
+            position: absolute;
+
+            inset: 0;
+
+            background: rgba(0,0,0,0.9);
+
+            display: none;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            z-index: 20;
+
+        }
+
+        .quiz-question {
+
+            font-size: 32px;
+
+            color: white;
+
+            margin-bottom: 20px;
+
+            font-weight: bold;
+
+        }
+
+        .quiz-timer {
+
+            font-size: 24px;
+
+            color: #ff4444;
+
+            margin-bottom: 30px;
+
+        }
+
+        .quiz-answers {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 15px;
+
+        }
+
+        .quiz-answer {
+
+            padding: 15px 50px;
+
+            background: white;
+
+            border: none;
+
+            border-radius: 10px;
+
+            font-size: 24px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+        .quiz-answer:hover {
+
+            background: #e0e0e0;
+
+        }
 
         #controls {
+
             display: flex;
+
             gap: 60px;
+
             margin-top: 25px;
+
         }
 
         .btn {
+
             width: 75px; height: 75px;
+
             background: var(--tg-btn);
+
             border-radius: 50%;
+
             border: none;
+
             color: white;
+
             font-size: 30px;
+
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
             user-select: none;
+
             -webkit-user-select: none;
+
         }
+
     </style>
+
 </head>
-<body class="light-theme">
+
+<body>
+
+
 
     <div id="gameContainer">
+
         <div id="score">0</div>
+
+        <button id="menuButton">☰</button>
+
         <canvas id="gameCanvas" width="320" height="500"></canvas>
 
-        <div id="mainMenu" class="overlay" style="display: flex;">
-            <h1>DOODLE JUMP</h1>
-            <button class="menu-btn" onclick="startGame()">ПОГНАЛИ!</button>
-            <button class="menu-btn" onclick="showSubMenu('achievementsMenu')">ДОСТИЖЕНИЯ</button>
-            <button class="menu-btn" onclick="showSubMenu('settingsMenu')">НАСТРОЙКИ</button>
+        
+
+        <div id="startScreen">
+
+            <button id="start-button">ПОГНАЛИ!</button>
+
         </div>
 
-        <div id="achievementsMenu" class="overlay">
-            <h2>РЕКОРДЫ</h2>
-            <p id="highScoreText">Макс. результат: 0</p>
-            <button class="menu-btn" onclick="showSubMenu('mainMenu')">НАЗАД</button>
-        </div>
+        
 
-        <div id="settingsMenu" class="overlay">
-            <h2>НАСТРОЙКИ</h2>
-            <button class="menu-btn" id="themeToggle" onclick="toggleTheme()">ТЕМНАЯ ТЕМА: ВЫКЛ</button>
-            <button class="menu-btn" id="soundToggle" onclick="toggleSound()">ЗВУК: ЗАВАЛИЛ</button>
-            <button class="menu-btn" id="modeToggle" onclick="toggleMode()">РЕЖИМ: КЛАССИКА</button>
-            <button class="menu-btn" id="mathToggle" onclick="toggleMath()">РЕШАЛА: ВЫКЛ</button>
-            <button class="menu-btn" onclick="showSubMenu('mainMenu')">НАЗАД</button>
-        </div>
+        <div id="menuScreen">
 
-        <div id="mathOverlay" class="overlay">
-            <div id="mathChallenge">
-                <div id="timer">3</div>
-                <h3 id="mathQuestion">123 + 456 = ?</h3>
-                <div id="mathAnswers"></div>
+            <div class="menu-title">МЕНЮ</div>
+
+            
+
+            <div class="menu-item">
+
+                <div class="menu-item-header">🏆 Достижения</div>
+
+                <div>Лучший результат: <span id="bestScore">0</span></div>
+
             </div>
+
+            
+
+            <div class="menu-item">
+
+                <div class="menu-item-header">🎮 Режим игры</div>
+
+                <div class="toggle-buttons">
+
+                    <button class="toggle-btn active" id="modeClassic">Классика</button>
+
+                    <button class="toggle-btn" id="modeAnal">Анал</button>
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="menu-item">
+
+                <div class="menu-item-header">🔊 Звук</div>
+
+                <div class="toggle-buttons">
+
+                    <button class="toggle-btn active" id="soundOn">Ору</button>
+
+                    <button class="toggle-btn" id="soundOff">Завалил</button>
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="menu-item">
+
+                <div class="menu-item-header">🎨 Тема</div>
+
+                <div class="toggle-buttons">
+
+                    <button class="toggle-btn active" id="themeLight">Светлая</button>
+
+                    <button class="toggle-btn" id="themeDark">Тёмная</button>
+
+                </div>
+
+            </div>
+
+            
+
+            <button id="closeMenuBtn">Закрыть</button>
+
         </div>
+
+        
+
+        <div id="mathQuiz">
+
+            <div class="quiz-question" id="quizQuestion"></div>
+
+            <div class="quiz-timer">Осталось: <span id="quizTimer">5</span> сек</div>
+
+            <div class="quiz-answers" id="quizAnswers"></div>
+
+        </div>
+
     </div>
+
+
 
     <div id="controls">
+
         <button id="left-btn" class="btn">◀</button>
+
         <button id="right-btn" class="btn">▶</button>
+
     </div>
 
+
+
     <script>
+
         const tg = window.Telegram.WebApp;
+
         tg.ready();
+
         tg.expand();
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreDiv = document.getElementById('score');
-        
-        let player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
-        let platforms = [];
-        let particles = [];
-        let score = 0;
-        let highScore = localStorage.getItem('doodle_highscore') || 0;
-        let gameOver = true;
-        let gameInterval;
-        let canRevive = true;
-        let countdownInterval = null;
-        
-        // Settings
-        let isDarkTheme = false;
-        let soundOn = false;
-        let gameMode = 'Классика';
-        let mathEnabled = false;
 
-        // Управление
+
+        const canvas = document.getElementById('gameCanvas');
+
+        const ctx = canvas.getContext('2d');
+
+        const scoreDiv = document.getElementById('score');
+
+        const startScreen = document.getElementById('startScreen');
+
+        const menuScreen = document.getElementById('menuScreen');
+
+        const mathQuiz = document.getElementById('mathQuiz');
+
+
+
+        const playerImg = new Image();
+
+        playerImg.src = 'player.png?v=' + Date.now(); 
+
+
+
+        let player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
+
+        let platforms = [];
+
+        let particles = [];
+
+        let score = 0;
+
+        let bestScore = localStorage.getItem('bestScore') || 0;
+
+        let gameOver = true;
+
+        let gameInterval;
+
+        let quizTimer;
+
+        let quizTimeLeft = 5;
+
+        
+
+        const BASE_PLATFORM_WIDTH = 70;
+
+        let currentPlatformWidth = BASE_PLATFORM_WIDTH;
+
+        let lastDifficultyTier = 0;
+
+        
+
         let leftPressed = false;
+
         let rightPressed = false;
+
         let lastPressed = null;
+
         let activeTouches = new Map();
 
-        function showSubMenu(menuId) {
-            document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
-            document.getElementById(menuId).style.display = 'flex';
-            if(menuId === 'achievementsMenu') {
-                document.getElementById('highScoreText').textContent = `Макс. результат: ${highScore}`;
-            }
-        }
+        
 
-        function toggleTheme() {
-            isDarkTheme = !isDarkTheme;
-            document.body.className = isDarkTheme ? 'dark-theme' : 'light-theme';
-            document.getElementById('themeToggle').textContent = `ТЕМНАЯ ТЕМА: ${isDarkTheme ? 'ВКЛ' : 'ВЫКЛ'}`;
-        }
+        // Настройки
 
-        function toggleSound() {
-            soundOn = !soundOn;
-            document.getElementById('soundToggle').textContent = `ЗВУК: ${soundOn ? 'ОРУ' : 'ЗАВАЛИЛ'}`;
-        }
+        let soundEnabled = true;
 
-        function toggleMode() {
-            gameMode = gameMode === 'Классика' ? 'Анал' : 'Классика';
-            document.getElementById('modeToggle').textContent = `РЕЖИМ: ${gameMode}`;
-        }
+        let darkTheme = false;
 
-        function toggleMath() {
-            mathEnabled = !mathEnabled;
-            document.getElementById('mathToggle').textContent = `РЕШАЛА: ${mathEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
-        }
+        let gameMode = 'classic';
+
+
+
+        document.getElementById('bestScore').textContent = bestScore;
+
+
 
         function createPlatforms() {
+
             platforms = [];
-            platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0, breakable: false, cracks: 0 });
+
+            currentPlatformWidth = BASE_PLATFORM_WIDTH;
+
+            lastDifficultyTier = 0;
+
+            platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0, breakable: false, used: false });
+
             for(let i = 1; i < 7; i++) {
+
                 addPlatform(420 - (i * 80));
+
             }
+
         }
+
+
 
         function addPlatform(yPos) {
+
+            const isMoving = Math.random() > 0.6;
+
             const isBreakable = Math.random() > 0.7;
+
             platforms.push({
-                x: Math.random() * (320 - 70),
+
+                x: Math.random() * (320 - currentPlatformWidth),
+
                 y: yPos,
-                w: 70,
+
+                w: currentPlatformWidth,
+
                 h: 12,
-                mv: Math.random() > 0.8 ? (Math.random() - 0.5) * 4 : 0,
+
+                mv: isMoving ? (Math.random() - 0.5) * 4 : 0,
+
                 breakable: isBreakable,
-                cracks: 0
+
+                used: false
+
             });
+
         }
+
+
+
+        function createGoldParticles(x, y) {
+
+            for (let i = 0; i < 8; i++) {
+
+                particles.push({
+
+                    x: x + player.w / 2,
+
+                    y: y + player.h,
+
+                    vx: (Math.random() - 0.5) * 4,
+
+                    vy: Math.random() * -3 - 1,
+
+                    life: 40,
+
+                    size: 4 + Math.random() * 3,
+
+                    color: "#FFD700"
+
+                });
+
+            }
+
+        }
+
+
 
         function createBreakParticles(p) {
+
             for (let i = 0; i < 12; i++) {
+
                 particles.push({
+
                     x: p.x + p.w / 2,
+
                     y: p.y + p.h / 2,
+
                     vx: (Math.random() - 0.5) * 6,
+
                     vy: (Math.random() - 0.5) * 6,
+
                     life: 30,
+
                     size: 3 + Math.random() * 2,
+
                     color: "#8B4513"
+
                 });
+
             }
+
         }
+
+
 
         function drawRoundedRect(x, y, w, h, radius) {
+
             ctx.beginPath();
+
             ctx.moveTo(x + radius, y);
+
             ctx.lineTo(x + w - radius, y);
+
             ctx.arcTo(x + w, y, x + w, y + radius, radius);
+
             ctx.lineTo(x + w, y + h - radius);
+
             ctx.arcTo(x + w, y + h, x + w - radius, y + h, radius);
+
             ctx.lineTo(x + radius, y + h);
+
             ctx.arcTo(x, y + h, x, y + h - radius, radius);
+
             ctx.lineTo(x, y + radius);
+
             ctx.arcTo(x, y, x + radius, y, radius);
+
             ctx.closePath();
+
             ctx.fill();
+
         }
 
-        function drawCracks(p) {
+
+
+        function drawCrackedPlatform(x, y, w, h, radius) {
+
+            // Рисуем основу
+
+            ctx.fillStyle = "#6B3410";
+
+            drawRoundedRect(x, y, w, h, radius);
+
+            
+
+            // Рисуем трещины
+
             ctx.strokeStyle = "#3a1d08";
+
             ctx.lineWidth = 1.5;
+
             
+
             ctx.beginPath();
-            ctx.moveTo(p.x + p.w * 0.3, p.y);
-            ctx.lineTo(p.x + p.w * 0.35, p.y + p.h);
+
+            ctx.moveTo(x + w * 0.3, y);
+
+            ctx.lineTo(x + w * 0.35, y + h);
+
             ctx.stroke();
+
             
+
             ctx.beginPath();
-            ctx.moveTo(p.x + p.w * 0.7, p.y);
-            ctx.lineTo(p.x + p.w * 0.65, p.y + p.h);
+
+            ctx.moveTo(x + w * 0.7, y);
+
+            ctx.lineTo(x + w * 0.65, y + h);
+
             ctx.stroke();
+
             
+
             ctx.beginPath();
-            ctx.moveTo(p.x, p.y + p.h * 0.5);
-            ctx.lineTo(p.x + p.w, p.y + p.h * 0.5);
+
+            ctx.moveTo(x, y + h * 0.5);
+
+            ctx.lineTo(x + w, y + h * 0.5);
+
             ctx.stroke();
+
         }
+
+
 
         function updatePlayerDirection() {
+
             if (leftPressed && rightPressed) {
+
                 if (lastPressed === 'left') {
+
                     player.dx = -5;
+
                 } else {
+
                     player.dx = 5;
+
                 }
+
             } else if (leftPressed) {
+
                 player.dx = -5;
+
             } else if (rightPressed) {
+
                 player.dx = 5;
+
             } else {
+
                 player.dx = 0;
+
             }
+
         }
+
+
+
+        function showMathQuiz() {
+
+            const num1 = Math.floor(Math.random() * 900) + 100;
+
+            const num2 = Math.floor(Math.random() * 900) + 100;
+
+            const correctAnswer = num1 + num2;
+
+            
+
+            const wrong1 = correctAnswer + Math.floor(Math.random() * 100) - 50;
+
+            const wrong2 = correctAnswer + Math.floor(Math.random() * 100) - 50;
+
+            
+
+            const answers = [correctAnswer, wrong1, wrong2].sort(() => Math.random() - 0.5);
+
+            
+
+            document.getElementById('quizQuestion').textContent = `${num1} + ${num2} = ?`;
+
+            
+
+            const answersContainer = document.getElementById('quizAnswers');
+
+            answersContainer.innerHTML = '';
+
+            
+
+            answers.forEach(answer => {
+
+                const btn = document.createElement('button');
+
+                btn.className = 'quiz-answer';
+
+                btn.textContent = answer;
+
+                btn.onclick = () => checkAnswer(answer, correctAnswer);
+
+                answersContainer.appendChild(btn);
+
+            });
+
+            
+
+            mathQuiz.style.display = 'flex';
+
+            quizTimeLeft = 5;
+
+            document.getElementById('quizTimer').textContent = quizTimeLeft;
+
+            
+
+            quizTimer = setInterval(() => {
+
+                quizTimeLeft--;
+
+                document.getElementById('quizTimer').textContent = quizTimeLeft;
+
+                if (quizTimeLeft <= 0) {
+
+                    clearInterval(quizTimer);
+
+                    mathQuiz.style.display = 'none';
+
+                    endGame();
+
+                }
+
+            }, 1000);
+
+        }
+
+
+
+        function checkAnswer(selected, correct) {
+
+            clearInterval(quizTimer);
+
+            mathQuiz.style.display = 'none';
+
+            
+
+            if (selected === correct) {
+
+                // Найти ближайшую не-рассыпающуюся платформу
+
+                let nearestPlatform = null;
+
+                let minY = Infinity;
+
+                
+
+                platforms.forEach(p => {
+
+                    if (!p.breakable && !p.toRemove && p.y < minY) {
+
+                        minY = p.y;
+
+                        nearestPlatform = p;
+
+                    }
+
+                });
+
+                
+
+                if (nearestPlatform) {
+
+                    player.y = nearestPlatform.y - player.h - 5;
+
+                    player.x = nearestPlatform.x + nearestPlatform.w / 2 - player.w / 2;
+
+                    player.dy = -10;
+
+                    gameOver = false;
+
+                    if (soundEnabled) tg.HapticFeedback.notificationOccurred('success');
+
+                } else {
+
+                    endGame();
+
+                }
+
+            } else {
+
+                endGame();
+
+            }
+
+        }
+
+
+
+        function endGame() {
+
+            if (score > bestScore) {
+
+                bestScore = score;
+
+                localStorage.setItem('bestScore', bestScore);
+
+                document.getElementById('bestScore').textContent = bestScore;
+
+            }
+
+            startScreen.style.display = 'flex';
+
+        }
+
+
+
+        function init() {
+
+            player.x = 135; player.y = 300; player.dy = 0; player.dx = 0;
+
+            score = 0;
+
+            scoreDiv.textContent = '0';
+
+            particles = [];
+
+            leftPressed = false;
+
+            rightPressed = false;
+
+            lastPressed = null;
+
+            activeTouches.clear();
+
+            createPlatforms();
+
+            startScreen.style.display = 'none';
+
+            menuScreen.style.display = 'none';
+
+            gameOver = false;
+
+            if(gameInterval) clearInterval(gameInterval);
+
+            gameInterval = setInterval(update, 1000/60);
+
+        }
+
+
 
         function update() {
+
             if(gameOver) return;
 
+
+
             player.dy += 0.28;
+
             player.y += player.dy;
+
             player.x += player.dx;
 
+
+
             if (player.x < -40) player.x = 320;
+
             if (player.x > 320) player.x = -40;
 
-            // Фильтруем удаленные платформы
-            platforms = platforms.filter(p => !p.removed);
 
-            platforms.forEach((p, index) => {
-                if (p.mv !== 0) {
-                    p.x += p.mv;
-                    if (p.x < -p.w) p.x = 320;
-                    if (p.x > 320) p.x = -p.w;
-                }
 
-                // Коллизия
-                if (player.dy > 0 && player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
-                    player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
-                    
-                    if (p.breakable) {
-                        if (p.cracks === 0) {
-                            // Первое касание коричневой
-                            player.dy = -10;
-                            p.cracks = 1;
-                            score += 10;
-                            if (soundOn) tg.HapticFeedback.impactOccurred('medium');
-                        } else if (p.cracks === 1) {
-                            // Второе касание - рассыпается
-                            createBreakParticles(p);
-                            p.removed = true;
-                            if (soundOn) tg.HapticFeedback.impactOccurred('heavy');
-                        }
-                    } else {
-                        // Обычная платформа
-                        player.dy = -10;
-                        score += 10;
-                        if (soundOn) tg.HapticFeedback.impactOccurred('light');
-                    }
-                }
-            });
+            let difficultyTier = Math.floor(score / 1000);
 
-            // Камера
-            if (player.y < 200) {
-                let offset = 200 - player.y;
-                player.y = 200;
-                score += Math.floor(offset / 10);
-                scoreDiv.textContent = score;
+            if (difficultyTier > lastDifficultyTier) {
+
+                currentPlatformWidth *= 0.9;
+
+                lastDifficultyTier = difficultyTier;
+
                 platforms.forEach(p => {
-                    p.y += offset;
-                    if (p.y > 500) {
-                        p.y = -20;
-                        p.x = Math.random() * (320 - 70);
-                        p.breakable = Math.random() > 0.7;
-                        p.cracks = 0;
-                        p.removed = false;
-                    }
+
+                    p.w = currentPlatformWidth;
+
                 });
-                particles.forEach(part => part.y += offset);
+
+                if (soundEnabled) tg.HapticFeedback.notificationOccurred('success');
+
             }
 
-            // Обновление частиц
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let part = particles[i];
-                part.x += part.vx;
-                part.y += part.vy;
-                part.vy += 0.15;
-                part.life--;
-                if (part.life <= 0) particles.splice(i, 1);
-            }
 
-            if (player.y > 500) triggerGameOver();
-            draw();
-        }
 
-        function triggerGameOver() {
-            gameOver = true;
-            clearInterval(gameInterval);
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('doodle_highscore', highScore);
-            }
+            platforms = platforms.filter(p => !p.toRemove);
 
-            if (mathEnabled && canRevive) {
-                showMathChallenge();
-            } else {
-                alert("Game Over! Рекорд: " + score);
-                showSubMenu('mainMenu');
-            }
-        }
 
-        function showMathChallenge() {
-            const overlay = document.getElementById('mathOverlay');
-            const qH3 = document.getElementById('mathQuestion');
-            const ansDiv = document.getElementById('mathAnswers');
-            const timerDiv = document.getElementById('timer');
-            
-            overlay.style.display = 'flex';
-            
-            const n1 = Math.floor(Math.random() * 800) + 100;
-            const n2 = Math.floor(Math.random() * 800) + 100;
-            const correct = n1 + n2;
-            
-            qH3.textContent = `${n1} + ${n2} = ?`;
-            
-            let answers = [correct, correct + Math.floor(Math.random() * 100) - 50, correct + Math.floor(Math.random() * 100) - 50]
-                .sort(() => Math.random() - 0.5);
-            ansDiv.innerHTML = '';
-            
-            answers.forEach(a => {
-                const btn = document.createElement('button');
-                btn.className = 'ans-btn';
-                btn.textContent = a;
-                btn.onclick = () => {
-                    clearInterval(countdownInterval);
-                    overlay.style.display = 'none';
-                    if (a === correct) {
-                        revivePlayer();
+
+            platforms.forEach(p => {
+
+                if (p.mv !== 0) {
+
+                    p.x += p.mv;
+
+                    if (p.x < -p.w) p.x = 320;
+
+                    if (p.x > 320) p.x = -p.w;
+
+                }
+
+
+
+                if (player.dy > 0 && player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
+
+                    player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
+
+                    
+
+                    if (p.breakable && p.used) {
+
+                        createBreakParticles(p);
+
+                        p.toRemove = true;
+
+                        if (soundEnabled) tg.HapticFeedback.impactOccurred('heavy');
+
                     } else {
-                        canRevive = false;
-                        alert("Game Over! Рекорд: " + score);
-                        showSubMenu('mainMenu');
+
+                        player.dy = -10;
+
+                        score += 20; 
+
+                        if (soundEnabled) tg.HapticFeedback.impactOccurred('medium');
+
+                        createGoldParticles(player.x, player.y);
+
+                        
+
+                        if (p.breakable) {
+
+                            p.used = true;
+
+                        }
+
                     }
-                };
-                ansDiv.appendChild(btn);
+
+                }
+
             });
 
-            let timeLeft = 3;
-            timerDiv.textContent = timeLeft;
-            countdownInterval = setInterval(() => {
-                timeLeft--;
-                timerDiv.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(countdownInterval);
-                    overlay.style.display = 'none';
-                    canRevive = false;
-                    alert("Game Over! Рекорд: " + score);
-                    showSubMenu('mainMenu');
-                }
-            }, 1000);
+
+
+            if (player.y < 200) {
+
+                let offset = 200 - player.y;
+
+                player.y = 200;
+
+                score += Math.floor(offset); 
+
+                scoreDiv.textContent = score;
+
+                platforms.forEach(p => {
+
+                    p.y += offset;
+
+                    if (p.y > 500) {
+
+                        p.y = -20;
+
+                        p.x = Math.random() * (320 - currentPlatformWidth);
+
+                        p.mv = Math.random() > 0.5 ? (Math.random() - 0.5) * (4 + difficultyTier) : 0;
+
+                        p.breakable = Math.random() > 0.7;
+
+                        p.used = false;
+
+                        p.toRemove = false;
+
+                    }
+
+                });
+
+                particles.forEach(part => part.y += offset);
+
+            }
+
+
+
+            if (player.y > 500) {
+
+                gameOver = true;
+
+                clearInterval(gameInterval);
+
+                if (soundEnabled) tg.HapticFeedback.notificationOccurred('error');
+
+                showMathQuiz();
+
+            }
+
+
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+
+                let part = particles[i];
+
+                part.x += part.vx; part.y += part.vy;
+
+                part.vy += 0.15; part.life--;
+
+                if (part.life <= 0) particles.splice(i, 1);
+
+            }
+
+
+
+            draw();
+
         }
 
-        function revivePlayer() {
-            canRevive = false;
-            
-            let safePlatform = platforms.find(p => !p.breakable && p.y > 50 && p.y < 450) || platforms[0];
-            
-            player.y = safePlatform.y - player.h - 20;
-            player.x = safePlatform.x;
-            player.dy = 0;
-            gameOver = false;
-            gameInterval = setInterval(update, 1000/60);
-        }
+
 
         function draw() {
+
             ctx.clearRect(0, 0, 320, 500);
+
             
+
             platforms.forEach(p => {
-                if (p.removed) return;
 
-                if (p.breakable) {
-                    if (p.cracks === 1) {
-                        ctx.fillStyle = "#6B3410";
-                    } else {
-                        ctx.fillStyle = "#8B4513";
-                    }
+                if (p.breakable && p.used) {
+
+                    // Треснувшая платформа
+
+                    drawCrackedPlatform(p.x, p.y, p.w, p.h, 6);
+
                 } else {
-                    ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+
+                    // Обычные платформы
+
+                    if (p.breakable) {
+
+                        ctx.fillStyle = "#8B4513";
+
+                    } else if (p.mv !== 0) {
+
+                        ctx.fillStyle = "#ff4444";
+
+                    } else {
+
+                        ctx.fillStyle = "#2e7d32";
+
+                    }
+
+                    drawRoundedRect(p.x, p.y, p.w, p.h, 6);
+
                 }
-                
-                drawRoundedRect(p.x, p.y, p.w, p.h, 6);
 
-                if (p.cracks === 1) drawCracks(p);
             });
 
-            // Частицы
+
+
             particles.forEach(part => {
-                ctx.globalAlpha = part.life / 30;
+
+                ctx.globalAlpha = part.life / 40;
+
                 ctx.fillStyle = part.color;
+
                 ctx.beginPath();
-                ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
+
+                ctx.arc(part.x, part.y, part.size, 0, Math.PI*2);
+
                 ctx.fill();
+
                 ctx.globalAlpha = 1;
+
             });
 
-            // Игрок
-            ctx.fillStyle = "#ff8f00";
-            ctx.fillRect(player.x, player.y, player.w, player.h);
+
+
+            if (playerImg.complete && playerImg.naturalWidth > 0) {
+
+                ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+
+            } else {
+
+                ctx.fillStyle = "#ff8f00";
+
+                ctx.fillRect(player.x, player.y, player.w, player.h);
+
+            }
+
         }
 
-        function startGame() {
-            score = 0;
-            canRevive = true;
-            player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
-            particles = [];
-            leftPressed = false;
-            rightPressed = false;
-            lastPressed = null;
-            activeTouches.clear();
-            scoreDiv.textContent = '0';
-            createPlatforms();
-            document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
-            gameOver = false;
-            if(gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(update, 1000/60);
-        }
 
-        // Управление
+
         const L = document.getElementById('left-btn');
+
         const R = document.getElementById('right-btn');
 
+
+
         function setLeftButton(pressed) {
+
             leftPressed = pressed;
+
             if (pressed) {
+
                 lastPressed = 'left';
+
             } else {
+
                 if (rightPressed) {
+
                     lastPressed = 'right';
+
                 } else {
+
                     lastPressed = null;
+
                 }
+
             }
+
             updatePlayerDirection();
+
         }
+
+
 
         function setRightButton(pressed) {
+
             rightPressed = pressed;
+
             if (pressed) {
+
                 lastPressed = 'right';
+
             } else {
+
                 if (leftPressed) {
+
                     lastPressed = 'left';
+
                 } else {
+
                     lastPressed = null;
+
                 }
+
             }
+
             updatePlayerDirection();
+
         }
 
+
+
         L.addEventListener('touchstart', (e) => { 
+
             e.preventDefault();
+
             for (let touch of e.changedTouches) {
+
                 activeTouches.set(touch.identifier, 'left');
+
             }
+
             setLeftButton(true);
+
         }, { passive: false });
+
+
 
         L.addEventListener('touchend', (e) => { 
+
             e.preventDefault();
+
             for (let touch of e.changedTouches) {
+
                 activeTouches.delete(touch.identifier);
+
             }
+
             let hasLeftTouch = Array.from(activeTouches.values()).includes('left');
+
             setLeftButton(hasLeftTouch);
+
         }, { passive: false });
+
+
 
         L.addEventListener('touchcancel', (e) => { 
+
             e.preventDefault();
+
             for (let touch of e.changedTouches) {
+
                 activeTouches.delete(touch.identifier);
+
             }
+
             let hasLeftTouch = Array.from(activeTouches.values()).includes('left');
+
             setLeftButton(hasLeftTouch);
+
         }, { passive: false });
+
+
 
         R.addEventListener('touchstart', (e) => { 
+
             e.preventDefault();
+
             for (let touch of e.changedTouches) {
+
                 activeTouches.set(touch.identifier, 'right');
+
             }
+
             setRightButton(true);
+
         }, { passive: false });
+
+
 
         R.addEventListener('touchend', (e) => { 
+
             e.preventDefault();
+
             for (let touch of e.changedTouches) {
+
                 activeTouches.delete(touch.identifier);
+
             }
+
             let hasRightTouch = Array.from(activeTouches.values()).includes('right');
+
             setRightButton(hasRightTouch);
+
         }, { passive: false });
+
+
 
         R.addEventListener('touchcancel', (e) => { 
+
             e.preventDefault();
+
             for (let touch of e.changedTouches) {
+
                 activeTouches.delete(touch.identifier);
+
             }
+
             let hasRightTouch = Array.from(activeTouches.values()).includes('right');
+
             setRightButton(hasRightTouch);
+
         }, { passive: false });
 
+
+
         L.addEventListener('mousedown', (e) => { 
+
             e.preventDefault(); 
+
             setLeftButton(true);
+
         });
+
         L.addEventListener('mouseup', (e) => { 
+
             e.preventDefault(); 
+
             setLeftButton(false);
+
         });
+
         L.addEventListener('mouseleave', (e) => { 
+
             setLeftButton(false);
+
         });
+
+
 
         R.addEventListener('mousedown', (e) => { 
+
             e.preventDefault(); 
+
             setRightButton(true);
+
         });
+
         R.addEventListener('mouseup', (e) => { 
+
             e.preventDefault(); 
+
             setRightButton(false);
+
         });
+
         R.addEventListener('mouseleave', (e) => { 
+
             setRightButton(false);
+
         });
+
+
 
         document.addEventListener('touchend', (e) => {
+
             for (let touch of e.changedTouches) {
+
                 activeTouches.delete(touch.identifier);
+
             }
+
         }, { passive: true });
 
+
+
+        // Меню
+
+        document.getElementById('menuButton').onclick = () => {
+
+            menuScreen.style.display = 'flex';
+
+        };
+
+
+
+        document.getElementById('closeMenuBtn').onclick = () => {
+
+            menuScreen.style.display = 'none';
+
+        };
+
+
+
+        // Режимы игры
+
+        document.getElementById('modeClassic').onclick = function() {
+
+            gameMode = 'classic';
+
+            document.getElementById('modeClassic').classList.add('active');
+
+            document.getElementById('modeAnal').classList.remove('active');
+
+        };
+
+
+
+        document.getElementById('modeAnal').onclick = function() {
+
+            gameMode = 'anal';
+
+            document.getElementById('modeAnal').classList.add('active');
+
+            document.getElementById('modeClassic').classList.remove('active');
+
+        };
+
+
+
+        // Звук
+
+        document.getElementById('soundOn').onclick = function() {
+
+            soundEnabled = true;
+
+            document.getElementById('soundOn').classList.add('active');
+
+            document.getElementById('soundOff').classList.remove('active');
+
+        };
+
+
+
+        document.getElementById('soundOff').onclick = function() {
+
+            soundEnabled = false;
+
+            document.getElementById('soundOff').classList.add('active');
+
+            document.getElementById('soundOn').classList.remove('active');
+
+        };
+
+
+
+        // Тема
+
+        document.getElementById('themeLight').onclick = function() {
+
+            darkTheme = false;
+
+            document.body.classList.remove('dark-theme');
+
+            document.getElementById('themeLight').classList.add('active');
+
+            document.getElementById('themeDark').classList.remove('active');
+
+        };
+
+
+
+        document.getElementById('themeDark').onclick = function() {
+
+            darkTheme = true;
+
+            document.body.classList.add('dark-theme');
+
+            document.getElementById('themeDark').classList.add('active');
+
+            document.getElementById('themeLight').classList.remove('active');
+
+        };
+
+
+
+        document.getElementById('start-button').onclick = init;
+
+        draw();
+
     </script>
+
 </body>
+
 </html>

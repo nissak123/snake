@@ -172,10 +172,8 @@
         const ctx = canvas.getContext('2d');
         const scoreDiv = document.getElementById('score');
         
-        // --- ЗАМЕНА КВАДРАТА НА КАРТИНКУ ---
         const playerImg = new Image();
         playerImg.src = 'player.png';
-        // ----------------------------------
 
         let player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
         let platforms = [];
@@ -187,13 +185,11 @@
         let canRevive = true;
         let countdownInterval = null;
         
-        // Settings
         let isDarkTheme = false;
         let soundOn = false;
         let gameMode = 'Классика';
         let mathEnabled = false;
 
-        // Управление
         let leftPressed = false;
         let rightPressed = false;
         let lastPressed = null;
@@ -324,7 +320,6 @@
             if (player.x < -40) player.x = 320;
             if (player.x > 320) player.x = -40;
 
-            // Фильтруем удаленные платформы
             platforms = platforms.filter(p => !p.removed);
 
             platforms.forEach((p, index) => {
@@ -334,33 +329,26 @@
                     if (p.x > 320) p.x = -p.w;
                 }
 
-                // Коллизия
                 if (player.dy > 0 && player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
                     player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
                     
                     if (p.breakable) {
                         if (p.cracks === 0) {
-                            // Первое касание коричневой
                             player.dy = -10;
                             p.cracks = 1;
-                            score += 10;
                             if (soundOn) tg.HapticFeedback.impactOccurred('medium');
                         } else if (p.cracks === 1) {
-                            // Второе касание - рассыпается
                             createBreakParticles(p);
                             p.removed = true;
                             if (soundOn) tg.HapticFeedback.impactOccurred('heavy');
                         }
                     } else {
-                        // Обычная платформа
                         player.dy = -10;
-                        score += 10;
                         if (soundOn) tg.HapticFeedback.impactOccurred('light');
                     }
                 }
             });
 
-            // Камера
             if (player.y < 200) {
                 let offset = 200 - player.y;
                 player.y = 200;
@@ -379,7 +367,6 @@
                 particles.forEach(part => part.y += offset);
             }
 
-            // Обновление частиц
             for (let i = particles.length - 1; i >= 0; i--) {
                 let part = particles[i];
                 part.x += part.vx;
@@ -462,9 +449,7 @@
 
         function revivePlayer() {
             canRevive = false;
-            
             let safePlatform = platforms.find(p => !p.breakable && p.y > 50 && p.y < 450) || platforms[0];
-            
             player.y = safePlatform.y - player.h - 20;
             player.x = safePlatform.x;
             player.dy = 0;
@@ -493,7 +478,6 @@
                 if (p.cracks === 1) drawCracks(p);
             });
 
-            // Частицы
             particles.forEach(part => {
                 ctx.globalAlpha = part.life / 30;
                 ctx.fillStyle = part.color;
@@ -503,9 +487,7 @@
                 ctx.globalAlpha = 1;
             });
 
-            // --- ОТРИСОВКА ИГРОКА (КАРТИНКА) ---
             ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
-            // ----------------------------------
         }
 
         function startGame() {
@@ -525,7 +507,6 @@
             gameInterval = setInterval(update, 1000/60);
         }
 
-        // Управление
         const L = document.getElementById('left-btn');
         const R = document.getElementById('right-btn');
 
@@ -609,36 +590,18 @@
             setRightButton(hasRightTouch);
         }, { passive: false });
 
-        L.addEventListener('mousedown', (e) => { 
-            e.preventDefault(); 
-            setLeftButton(true);
-        });
-        L.addEventListener('mouseup', (e) => { 
-            e.preventDefault(); 
-            setLeftButton(false);
-        });
-        L.addEventListener('mouseleave', (e) => { 
-            setLeftButton(false);
-        });
-
-        R.addEventListener('mousedown', (e) => { 
-            e.preventDefault(); 
-            setRightButton(true);
-        });
-        R.addEventListener('mouseup', (e) => { 
-            e.preventDefault(); 
-            setRightButton(false);
-        });
-        R.addEventListener('mouseleave', (e) => { 
-            setRightButton(false);
-        });
+        L.addEventListener('mousedown', (e) => { e.preventDefault(); setLeftButton(true); });
+        L.addEventListener('mouseup', (e) => { e.preventDefault(); setLeftButton(false); });
+        L.addEventListener('mouseleave', (e) => { setLeftButton(false); });
+        R.addEventListener('mousedown', (e) => { e.preventDefault(); setRightButton(true); });
+        R.addEventListener('mouseup', (e) => { e.preventDefault(); setRightButton(false); });
+        R.addEventListener('mouseleave', (e) => { setRightButton(false); });
 
         document.addEventListener('touchend', (e) => {
             for (let touch of e.changedTouches) {
                 activeTouches.delete(touch.identifier);
             }
         }, { passive: true });
-
     </script>
 </body>
 </html>

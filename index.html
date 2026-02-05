@@ -110,8 +110,8 @@
         const playerImg = new Image();
         playerImg.src = 'kit.png?v=' + Date.now();
         
-        // Игрок широкий (100), но прыгать будет только центром
         let player = { x: 110, y: 300, w: 100, h: 50, dx: 0, dy: 0 };
+        let facingRight = true; // ПЕРЕМЕННАЯ ДЛЯ ПОВОРОТА
         let platforms = [];
         let particles = [];
         let score = 0;
@@ -159,7 +159,6 @@
 
         function createPlatforms() {
             platforms = [];
-            // Первая платформа по центру под широким игроком
             platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0, breakable: false, cracks: 0 });
             for(let i = 1; i < 7; i++) addPlatform(420 - (i * 80));
         }
@@ -209,6 +208,10 @@
             else if (leftPressed) player.dx = -5;
             else if (rightPressed) player.dx = 5;
             else player.dx = 0;
+
+            // ОБНОВЛЕНИЕ НАПРАВЛЕНИЯ ВЗГЛЯДА
+            if (player.dx > 0) facingRight = true;
+            else if (player.dx < 0) facingRight = false;
         }
 
         function update() {
@@ -218,7 +221,6 @@
             player.y += player.dy;
             player.x += player.dx;
 
-            // Бесшовный экран
             if (player.x < -player.w) player.x = 320;
             if (player.x > 320) player.x = -player.w;
 
@@ -231,8 +233,6 @@
                     if (p.x > 320) p.x = -p.w;
                 }
 
-                // --- ИСПРАВЛЕННАЯ ЛОГИКА ХИТБОКСА ---
-                // Заменили отступ с 10 на 35, чтобы "чувствительным" был только центр 100-пиксельной картинки
                 const hitboxOffset = 35; 
                 if (player.dy > 0 && 
                     player.x + hitboxOffset < p.x + p.w && 
@@ -329,13 +329,27 @@
                 ctx.globalAlpha = part.life / 30; ctx.fillStyle = part.color;
                 ctx.beginPath(); ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
             });
-            if (playerImg.complete) ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
-            else { ctx.fillStyle = "#ff8f00"; ctx.fillRect(player.x + 25, player.y, 50, 50); }
+
+            // ОТРИСОВКА ИГРОКА С ПОВОРОТОМ
+            if (playerImg.complete) {
+                ctx.save();
+                if (!facingRight) {
+                    ctx.translate(player.x + player.w, player.y);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(playerImg, 0, 0, player.w, player.h);
+                } else {
+                    ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+                }
+                ctx.restore();
+            } else {
+                ctx.fillStyle = "#ff8f00"; ctx.fillRect(player.x + 25, player.y, 50, 50);
+            }
         }
 
         function startGame() {
             score = 0; canRevive = true;
             player = { x: 110, y: 300, w: 100, h: 50, dx: 0, dy: 0 };
+            facingRight = true;
             particles = []; leftPressed = false; rightPressed = false; lastPressed = null;
             scoreDiv.textContent = '0'; createPlatforms();
             document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');

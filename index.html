@@ -171,6 +171,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDiv = document.getElementById('score');
+        
         const playerImg = new Image();
         playerImg.src = 'kit.png?v=' + Date.now();
         
@@ -276,7 +277,7 @@
         }
 
         function drawCracks(p) {
-            ctx.strokeStyle = "#808080";
+            ctx.strokeStyle = "#ffffff";
             ctx.lineWidth = 1.5;
             
             ctx.beginPath();
@@ -469,48 +470,46 @@
             gameInterval = setInterval(update, 1000/60);
         }
 
-       function draw() {
-    ctx.clearRect(0, 0, 320, 500);
-    
-    platforms.forEach(p => {
-        if (p.removed) return;
-
-        if (p.breakable) {
-            if (p.cracks === 1) {
-                ctx.fillStyle = "#6B3410";
-            } else {
-                ctx.fillStyle = "#8B4513";
-            }
-        } else {
-            ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
-        }
-        
-        drawRoundedRect(p.x, p.y, p.w, p.h, 6);
-
-        if (p.cracks === 1) drawCracks(p);
-    });
-
-    // Частицы
-    particles.forEach(part => {
-        ctx.globalAlpha = part.life / 30;
-        ctx.fillStyle = part.color;
-        ctx.beginPath();
-        ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-    });
-
-    // Игрок - используем изображение
-    if (playerImg.complete && playerImg.naturalWidth > 0) {
-        ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
-    } else {
-        // Запасной вариант если картинка не загрузилась
-        ctx.fillStyle = "#ff8f00";
-        ctx.fillRect(player.x, player.y, player.w, player.h);
-    }
-}
-
+        function draw() {
+            ctx.clearRect(0, 0, 320, 500);
             
+            platforms.forEach(p => {
+                if (p.removed) return;
+
+                if (p.breakable) {
+                    if (p.cracks === 1) {
+                        ctx.fillStyle = "#6B3410";
+                    } else {
+                        ctx.fillStyle = "#8B4513";
+                    }
+                } else {
+                    ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+                }
+                
+                drawRoundedRect(p.x, p.y, p.w, p.h, 6);
+
+                if (p.cracks === 1) drawCracks(p);
+            });
+
+            // Частицы
+            particles.forEach(part => {
+                ctx.globalAlpha = part.life / 30;
+                ctx.fillStyle = part.color;
+                ctx.beginPath();
+                ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            });
+
+            // Игрок - используем изображение kit.png
+            if (playerImg.complete && playerImg.naturalWidth > 0) {
+                ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+            } else {
+                // Запасной вариант если картинка не загрузилась
+                ctx.fillStyle = "#ff8f00";
+                ctx.fillRect(player.x, player.y, player.w, player.h);
+            }
+        }
 
         function startGame() {
             score = 0;
@@ -646,7 +645,3 @@
     </script>
 </body>
 </html>
-
-
-
-

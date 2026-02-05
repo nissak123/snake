@@ -352,7 +352,10 @@
             if (player.y < 200) {
                 let offset = 200 - player.y;
                 player.y = 200;
-                score += Math.floor(offset / 10);
+                // --- ИЗМЕНЕННАЯ ЛОГИКА ОЧКОВ ---
+                let randomMultiplier = Math.floor(Math.random() * (6 - 2 + 1)) + 2;
+                score += Math.floor((offset / 10) * randomMultiplier);
+                // -------------------------------
                 scoreDiv.textContent = score;
                 platforms.forEach(p => {
                     p.y += offset;

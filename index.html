@@ -510,20 +510,7 @@
     }
 }
 
-            // Частицы
-            particles.forEach(part => {
-                ctx.globalAlpha = part.life / 30;
-                ctx.fillStyle = part.color;
-                ctx.beginPath();
-                ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.globalAlpha = 1;
-            });
-
-            // Игрок
-            ctx.fillStyle = "#ff8f00";
-            ctx.fillRect(player.x, player.y, player.w, player.h);
-        }
+            
 
         function startGame() {
             score = 0;
@@ -659,6 +646,7 @@
     </script>
 </body>
 </html>
+
 
 
 

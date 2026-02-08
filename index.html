@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Doodle Jump Challenge Pro</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js "></script>
     <style>
         :root {
             --tg-bg: var(--tg-theme-bg-color, #ffffff);
@@ -203,10 +203,8 @@
     <div id="controls">
         <button id="left-btn" class="btn">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <!-- Лапка кота -->
                 <path d="M 50 30 Q 40 35 35 45 Q 30 50 35 55 L 40 60 L 45 55 L 50 60 L 55 55 L 60 60 L 65 55 Q 70 50 65 45 Q 60 35 50 30 Z" 
                       fill="none" stroke="black" stroke-width="2"/>
-                <!-- Подушечки -->
                 <circle cx="45" cy="50" r="3" fill="none" stroke="black" stroke-width="1.5"/>
                 <circle cx="55" cy="50" r="3" fill="none" stroke="black" stroke-width="1.5"/>
                 <circle cx="50" cy="55" r="3" fill="none" stroke="black" stroke-width="1.5"/>
@@ -214,14 +212,12 @@
         </button>
         <button id="jump-btn" class="btn">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <!-- Левая лапка -->
                 <path d="M 35 25 Q 25 30 20 40 Q 15 45 20 50 L 25 55 L 30 50 L 35 55 L 40 50 L 45 55 L 50 50 Q 55 45 50 40 Q 45 30 35 25 Z" 
                       fill="none" stroke="black" stroke-width="2"/>
                 <circle cx="30" cy="45" r="2" fill="none" stroke="black" stroke-width="1.5"/>
                 <circle cx="40" cy="45" r="2" fill="none" stroke="black" stroke-width="1.5"/>
                 <circle cx="35" cy="50" r="2" fill="none" stroke="black" stroke-width="1.5"/>
                 
-                <!-- Правая лапка -->
                 <path d="M 65 25 Q 55 30 50 40 Q 45 45 50 50 L 55 55 L 60 50 L 65 55 L 70 50 L 75 55 L 80 50 Q 85 45 80 40 Q 75 30 65 25 Z" 
                       fill="none" stroke="black" stroke-width="2"/>
                 <circle cx="60" cy="45" r="2" fill="none" stroke="black" stroke-width="1.5"/>
@@ -232,10 +228,8 @@
         </button>
         <button id="right-btn" class="btn">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <!-- Лапка кота -->
                 <path d="M 50 30 Q 40 35 35 45 Q 30 50 35 55 L 40 60 L 45 55 L 50 60 L 55 55 L 60 60 L 65 55 Q 70 50 65 45 Q 60 35 50 30 Z" 
                       fill="none" stroke="black" stroke-width="2"/>
-                <!-- Подушечки -->
                 <circle cx="45" cy="50" r="3" fill="none" stroke="black" stroke-width="1.5"/>
                 <circle cx="55" cy="50" r="3" fill="none" stroke="black" stroke-width="1.5"/>
                 <circle cx="50" cy="55" r="3" fill="none" stroke="black" stroke-width="1.5"/>
@@ -348,9 +342,8 @@
         // Создание частиц от уменьшения платформы
         function createShrinkParticles(p, oldWidth) {
             const widthDiff = oldWidth - p.w;
-            const numParticles = Math.floor(widthDiff * 2); // Количество частиц зависит от уменьшения
+            const numParticles = Math.floor(widthDiff * 2); 
             
-            // Определяем цвет в зависимости от типа платформы
             let particleColor;
             if (p.breakable) {
                 particleColor = p.cracks === 1 ? "#6B3410" : "#8B4513";
@@ -358,9 +351,8 @@
                 particleColor = p.mv !== 0 ? "#ff4444" : "#2e7d32";
             }
             
-            // Создаем частицы с правого и левого края платформы
             for (let i = 0; i < numParticles; i++) {
-                const side = Math.random() > 0.5 ? 1 : -1; // Левый или правый край
+                const side = Math.random() > 0.5 ? 1 : -1; 
                 const startX = side > 0 ? p.x + p.w : p.x;
                 
                 particles.push({
@@ -500,20 +492,14 @@
         }
 
         function performJump() {
-    // Убираем проверку player.dy >= 0, чтобы прыжок работал и в полете вверх
-    if (!gameOver && jumpCount > 0) {
-        player.dy = -10; // Устанавливаем скорость прыжка
-        // player.y -= 25; // Эту строку можно оставить или убрать для плавности
-        jumpCount--;
-        updateJumpCounter();
-        
-        if (soundOn) {
-            try {
-                tg.HapticFeedback.impactOccurred('medium');
-            } catch(e) {}
+            if (!gameOver && jumpCount > 0) {
+                player.dy = -10;
+                player.y -= 25;
+                jumpCount--;
+                updateJumpCounter();
+                if (soundOn) tg.HapticFeedback.impactOccurred('medium');
+            }
         }
-    }
-}
 
         function update() {
             if(gameOver) return;
@@ -562,10 +548,9 @@
                 let offset = 200 - player.y;
                 player.y = 200;
                 
-                let pointsPerPixel = (Math.floor(Math.random() * 4) + 5) / 10;
+                let pointsPerPixel = (Math.floor(Math.random() * 4) + 7) / 10;
                 score += Math.floor(offset * pointsPerPixel);
                 
-                // Уменьшение платформ с эффектом рассыпания
                 if (Math.floor(score / 1000) > lastShrinkThreshold) {
                     lastShrinkThreshold = Math.floor(score / 1000);
                     const oldPlatformWidth = platformWidth;
@@ -575,7 +560,6 @@
                         if (!p.removed) {
                             const oldWidth = p.w;
                             p.w *= 0.9;
-                            // Создаем частицы рассыпания для каждой платформы
                             createShrinkParticles(p, oldWidth);
                         }
                     });
@@ -612,7 +596,6 @@
             gameOver = true;
             clearInterval(gameInterval);
             
-            // Останавливаем музыку при окончании игры
             bgMusic.pause();
             bgMusic.currentTime = 0;
             
@@ -686,7 +669,6 @@
             gameOver = false;
             gameInterval = setInterval(update, 1000/60);
             
-            // Продолжаем музыку при возрождении
             if (soundOn) {
                 bgMusic.play().catch(e => console.log('Audio play prevented:', e));
             }
@@ -743,7 +725,6 @@
             if(gameInterval) clearInterval(gameInterval);
             gameInterval = setInterval(update, 1000/60);
             
-            // Запускаем музыку только при старте игры
             if (soundOn) {
                 bgMusic.currentTime = 0;
                 bgMusic.play().catch(e => console.log('Audio play prevented:', e));
@@ -880,4 +861,3 @@
     </script>
 </body>
 </html>
-

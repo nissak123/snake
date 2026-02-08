@@ -249,8 +249,8 @@
         const playerImg = new Image();
         playerImg.src = 'player.png';
 
-        const blockKImg = new Image(); // ← ЕДИНСТВЕННОЕ ДОБАВЛЕНИЕ
-        blockKImg.src = 'blockK.png';  // ← ЕДИНСТВЕННОЕ ДОБАВЛЕНИЕ
+        const travaImg = new Image(); // ← ДОБАВЛЕНО
+        travaImg.src = 'trava.png';  // ← ДОБАВЛЕНО
 
         // Фоновая музыка
         const bgMusic = new Audio('background_music.mp3');
@@ -685,19 +685,23 @@
                 if (p.removed) return;
 
                 if (p.breakable) {
-                    // Рисуем изображение blockK.png вместо коричневого прямоугольника
-                    if (blockKImg.complete) {
-                        ctx.drawImage(blockKImg, p.x, p.y, p.w, p.h);
+                    // Коричневые (breakable) — оставляем как есть (без изменения)
+                    if (p.cracks === 1) {
+                        ctx.fillStyle = "#6B3410";
                     } else {
-                        // Резервный вариант на случай, если изображение не загрузилось
-                        ctx.fillStyle = p.cracks === 1 ? "#6B3410" : "#8B4513";
-                        drawRoundedRect(p.x, p.y, p.w, p.h, 6);
+                        ctx.fillStyle = "#8B4513";
                     }
-                    
+                    drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                     if (p.cracks === 1) drawCracks(p);
                 } else {
-                    ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
-                    drawRoundedRect(p.x, p.y, p.w, p.h, 6);
+                    // Зелёные (обычные) — заменяем на trava.png
+                    if (travaImg.complete) {
+                        ctx.drawImage(travaImg, p.x, p.y, p.w, p.h);
+                    } else {
+                        // Резерв: если изображение не загрузилось
+                        ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+                        drawRoundedRect(p.x, p.y, p.w, p.h, 6);
+                    }
                 }
             });
 

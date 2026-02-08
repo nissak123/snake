@@ -279,19 +279,19 @@
         bgMusic.loop = true;
         bgMusic.volume = 1.0;
 
-        function onImageLoad() {
+        function onImageLoad(imgName) {
             imagesLoaded++;
-            console.log(`Загружено изображений: ${imagesLoaded}/${totalImages}`);
+            console.log(`✅ Загружено: ${imgName} (${imagesLoaded}/${totalImages})`);
             if (imagesLoaded === totalImages) {
                 allImagesLoaded = true;
-                console.log('Все изображения загружены!');
+                console.log('🎉 Все изображения загружены!');
                 const loadingText = document.getElementById('loadingText');
                 if (loadingText) loadingText.style.display = 'none';
             }
         }
 
         function onImageError(imgName) {
-            console.warn(`Не удалось загрузить: ${imgName} - будут использоваться фигуры`);
+            console.warn(`❌ Не удалось загрузить: ${imgName} - будут использоваться фигуры`);
             imagesLoaded++;
             if (imagesLoaded === totalImages) {
                 allImagesLoaded = true;
@@ -303,19 +303,35 @@
             }
         }
 
-        playerImg.onload = onImageLoad;
+        playerImg.onload = function() { 
+            console.log('playerImg loaded, size:', this.naturalWidth, 'x', this.naturalHeight);
+            onImageLoad('player.png');
+        };
         playerImg.onerror = () => onImageError('player.png');
         playerImg.src = 'player.png';
 
-        blockKImg.onload = onImageLoad;
+        blockKImg.onload = function() { 
+            console.log('blockKImg loaded, size:', this.naturalWidth, 'x', this.naturalHeight);
+            onImageLoad('blockK.png');
+        };
         blockKImg.onerror = () => onImageError('blockK.png');
         blockKImg.src = 'blockK.png';
 
-        travaImg.onload = onImageLoad;
-        travaImg.onerror = () => onImageError('trava.png');
+        travaImg.onload = function() { 
+            console.log('travaImg loaded, size:', this.naturalWidth, 'x', this.naturalHeight);
+            onImageLoad('trava.png');
+        };
+        travaImg.onerror = (e) => {
+            console.error('travaImg error event:', e);
+            onImageError('trava.png');
+        };
+        console.log('Начинаю загрузку trava.png...');
         travaImg.src = 'trava.png';
 
-        lavaImg.onload = onImageLoad;
+        lavaImg.onload = function() { 
+            console.log('lavaImg loaded, size:', this.naturalWidth, 'x', this.naturalHeight);
+            onImageLoad('lava.png');
+        };
         lavaImg.onerror = () => onImageError('lava.png');
         lavaImg.src = 'lava.png';
 
@@ -765,7 +781,18 @@
                     }
                     if (p.cracks === 1) drawCracks(p);
                 } else if (p.mv === 0) {
-                    if (travaImg.complete && travaImg.naturalWidth > 0) {
+                    // Зелёная платформа (trava)
+                    const canDrawTrava = travaImg.complete && travaImg.naturalWidth > 0;
+                    if (!canDrawTrava && Math.random() < 0.01) {
+                        console.log('trava status:', {
+                            complete: travaImg.complete,
+                            naturalWidth: travaImg.naturalWidth,
+                            src: travaImg.src,
+                            currentSrc: travaImg.currentSrc
+                        });
+                    }
+                    
+                    if (canDrawTrava) {
                         ctx.drawImage(travaImg, p.x, p.y, p.w, p.h);
                     } else {
                         ctx.fillStyle = "#2e7d32";

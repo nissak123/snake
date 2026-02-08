@@ -249,8 +249,12 @@
         const playerImg = new Image();
         playerImg.src = 'player.png';
 
-        const travaImg = new Image(); // ← ДОБАВЛЕНО
-        travaImg.src = 'trava.png';  // ← ДОБАВЛЕНО
+        // 🔹 Добавлены оба изображения
+        const blockKImg = new Image();
+        blockKImg.src = 'blockK.png';
+
+        const travaImg = new Image();
+        travaImg.src = 'trava.png';
 
         // Фоновая музыка
         const bgMusic = new Audio('background_music.mp3');
@@ -685,23 +689,26 @@
                 if (p.removed) return;
 
                 if (p.breakable) {
-                    // Коричневые (breakable) — оставляем как есть (без изменения)
-                    if (p.cracks === 1) {
-                        ctx.fillStyle = "#6B3410";
+                    // 🔹 Коричневые — blockK.png
+                    if (blockKImg.complete) {
+                        ctx.drawImage(blockKImg, p.x, p.y, p.w, p.h);
                     } else {
-                        ctx.fillStyle = "#8B4513";
+                        ctx.fillStyle = p.cracks === 1 ? "#6B3410" : "#8B4513";
+                        drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                     }
-                    drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                     if (p.cracks === 1) drawCracks(p);
-                } else {
-                    // Зелёные (обычные) — заменяем на trava.png
+                } else if (p.mv === 0) {
+                    // 🔹 Зелёные (неподвижные) — trava.png
                     if (travaImg.complete) {
                         ctx.drawImage(travaImg, p.x, p.y, p.w, p.h);
                     } else {
-                        // Резерв: если изображение не загрузилось
-                        ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+                        ctx.fillStyle = "#2e7d32";
                         drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                     }
+                } else {
+                    // 🔹 Красные (движущиеся) — как раньше
+                    ctx.fillStyle = "#ff4444";
+                    drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                 }
             });
 

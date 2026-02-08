@@ -170,7 +170,7 @@
 
         <div id="mainMenu" class="overlay" style="display: flex;">
             <h1>DOODLE JUMP</h1>
-            <button class="menu-btn" onclick="startGame()">ПОГНАЛИ!</button>
+            <button class="menu-btn" onclick="waitForImages(startGame)">ПОГНАЛИ!</button>
             <button class="menu-btn" onclick="showSubMenu('achievementsMenu')">ДОСТИЖЕНИЯ</button>
             <button class="menu-btn" onclick="showSubMenu('settingsMenu')">НАСТРОЙКИ</button>
         </div>
@@ -258,6 +258,28 @@
 
         const lavaImg = new Image();
         lavaImg.src = 'lava.png';
+        function waitForImages(callback) {
+    const images = [playerImg, blockKImg, travaImg, lavaImg];
+    let loaded = 0;
+    let total = images.length;
+
+    images.forEach(img => {
+        if (img.complete) {
+            loaded++;
+        } else {
+            img.onload = () => {
+                loaded++;
+                if (loaded === total) callback();
+            };
+            img.onerror = () => {
+                loaded++;
+                if (loaded === total) callback();
+            };
+        }
+    });
+
+    if (loaded === total) callback();
+}
 
         // Фоновая музыка
         const bgMusic = new Audio('background_music.mp3');
@@ -892,5 +914,6 @@
     </script>
 </body>
 </html>
+
 
 

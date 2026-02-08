@@ -396,11 +396,11 @@
             const isMoving = Math.random() > Math.max(0.4, moveChance);
 
             // ✅ Индивидуальная высота для каждого типа
-            let height = 30; // default: trava (зелёные)
+            let height = 14; // default: trava (зелёные)
             if (isBreakable) {
-                height = 20; // blockK (коричневые)
+                height = 10; // blockK (коричневые)
             } else if (isMoving) {
-                height = 20; // lava (движущиеся)
+                height = 10; // lava (движущиеся)
             }
 
             let attempts = 0;
@@ -892,4 +892,5 @@
     </script>
 </body>
 </html>
+
 

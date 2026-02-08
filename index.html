@@ -172,7 +172,7 @@
         }
     </style>
 </head>
-<body class="light-theme">
+<body class="dark-theme">
 
     <div id="gameContainer">
         <div id="score">0</div>
@@ -194,7 +194,7 @@
 
         <div id="settingsMenu" class="overlay">
             <h2>НАСТРОЙКИ</h2>
-            <button class="menu-btn" id="themeToggle" onclick="toggleTheme()">ТЕМНАЯ ТЕМА: ВЫКЛ</button>
+            <button class="menu-btn" id="themeToggle" onclick="toggleTheme()">ТЕМНАЯ ТЕМА: ВКЛ</button>
             <button class="menu-btn" id="soundToggle" onclick="toggleSound()">ЗВУК: ОРУ</button>
             <button class="menu-btn" id="modeToggle" onclick="toggleMode()">РЕЖИМ: КЛАССИКА</button>
             <button class="menu-btn" id="mathToggle" onclick="toggleMath()">РЕШАЛА: ВЫКЛ</button>
@@ -351,7 +351,7 @@
         let bgOffset = 0; // Смещение фона
         let glowDots = []; // Светящиеся точки
         
-        let isDarkTheme = false;
+        let isDarkTheme = true;
         let soundOn = true;
         let gameMode = 'Классика';
         let mathEnabled = false;

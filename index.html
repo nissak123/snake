@@ -500,14 +500,20 @@
         }
 
         function performJump() {
-            if (!gameOver && player.dy >= 0 && jumpCount > 0) {
-                player.dy = -10;
-                player.y -= 25;
-                jumpCount--;
-                updateJumpCounter();
-                if (soundOn) tg.HapticFeedback.impactOccurred('medium');
-            }
+    // Убираем проверку player.dy >= 0, чтобы прыжок работал и в полете вверх
+    if (!gameOver && jumpCount > 0) {
+        player.dy = -10; // Устанавливаем скорость прыжка
+        // player.y -= 25; // Эту строку можно оставить или убрать для плавности
+        jumpCount--;
+        updateJumpCounter();
+        
+        if (soundOn) {
+            try {
+                tg.HapticFeedback.impactOccurred('medium');
+            } catch(e) {}
         }
+    }
+}
 
         function update() {
             if(gameOver) return;
@@ -874,3 +880,4 @@
     </script>
 </body>
 </html>
+

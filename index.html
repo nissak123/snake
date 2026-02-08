@@ -53,6 +53,16 @@
             z-index: 5;
         }
 
+        #loadingText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: var(--text-color);
+            z-index: 10;
+        }
+
         /* Меню и Оверлеи */
         .overlay {
             position: absolute;
@@ -166,11 +176,12 @@
 
     <div id="gameContainer">
         <div id="score">0</div>
+        <div id="loadingText">Загрузка...</div>
         <canvas id="gameCanvas" width="320" height="500"></canvas>
 
         <div id="mainMenu" class="overlay" style="display: flex;">
             <h1>DOODLE JUMP</h1>
-            <button class="menu-btn" onclick="waitForImages(startGame)">ПОГНАЛИ!</button>
+            <button class="menu-btn" onclick="startGame()">ПОГНАЛИ!</button>
             <button class="menu-btn" onclick="showSubMenu('achievementsMenu')">ДОСТИЖЕНИЯ</button>
             <button class="menu-btn" onclick="showSubMenu('settingsMenu')">НАСТРОЙКИ</button>
         </div>
@@ -238,7 +249,14 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
+        // Безопасная инициализация Telegram WebApp
+        const tg = window.Telegram?.WebApp || {
+            ready: () => {},
+            expand: () => {},
+            HapticFeedback: {
+                impactOccurred: () => {}
+            }
+        };
         tg.ready();
         tg.expand();
 
@@ -246,45 +264,60 @@
         const ctx = canvas.getContext('2d');
         const scoreDiv = document.getElementById('score');
         
+        // Система загрузки изображений - объявляем ПЕРЕД созданием изображений
+        let imagesLoaded = 0;
+        const totalImages = 4;
+        let allImagesLoaded = false;
+
         const playerImg = new Image();
-        playerImg.src = 'player.png';
-
-        // Загружаем все три изображения
         const blockKImg = new Image();
-        blockKImg.src = 'blockK.png';
-
         const travaImg = new Image();
-        travaImg.src = 'trava.png';
-
         const lavaImg = new Image();
-        lavaImg.src = 'lava.png';
-        function waitForImages(callback) {
-    const images = [playerImg, blockKImg, travaImg, lavaImg];
-    let loaded = 0;
-    let total = images.length;
-
-    images.forEach(img => {
-        if (img.complete) {
-            loaded++;
-        } else {
-            img.onload = () => {
-                loaded++;
-                if (loaded === total) callback();
-            };
-            img.onerror = () => {
-                loaded++;
-                if (loaded === total) callback();
-            };
-        }
-    });
-
-    if (loaded === total) callback();
-}
 
         // Фоновая музыка
         const bgMusic = new Audio('background_music.mp3');
         bgMusic.loop = true;
         bgMusic.volume = 1.0;
+
+        function onImageLoad() {
+            imagesLoaded++;
+            console.log(`Загружено изображений: ${imagesLoaded}/${totalImages}`);
+            if (imagesLoaded === totalImages) {
+                allImagesLoaded = true;
+                console.log('Все изображения загружены!');
+                const loadingText = document.getElementById('loadingText');
+                if (loadingText) loadingText.style.display = 'none';
+            }
+        }
+
+        function onImageError(imgName) {
+            console.warn(`Не удалось загрузить: ${imgName} - будут использоваться фигуры`);
+            imagesLoaded++;
+            if (imagesLoaded === totalImages) {
+                allImagesLoaded = true;
+                const loadingText = document.getElementById('loadingText');
+                if (loadingText) {
+                    loadingText.textContent = 'Изображения не найдены - используются фигуры';
+                    setTimeout(() => loadingText.style.display = 'none', 2000);
+                }
+            }
+        }
+
+        playerImg.onload = onImageLoad;
+        playerImg.onerror = () => onImageError('player.png');
+        playerImg.src = 'player.png';
+
+        blockKImg.onload = onImageLoad;
+        blockKImg.onerror = () => onImageError('blockK.png');
+        blockKImg.src = 'blockK.png';
+
+        travaImg.onload = onImageLoad;
+        travaImg.onerror = () => onImageError('trava.png');
+        travaImg.src = 'trava.png';
+
+        lavaImg.onload = onImageLoad;
+        lavaImg.onerror = () => onImageError('lava.png');
+        lavaImg.src = 'lava.png';
 
         let player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
         let platforms = [];
@@ -420,9 +453,9 @@
             // ✅ Индивидуальная высота для каждого типа
             let height = 14; // default: trava (зелёные)
             if (isBreakable) {
-                height = 10; // blockK (коричневые)
+                height = 18; // blockK (коричневые)
             } else if (isMoving) {
-                height = 10; // lava (движущиеся)
+                height = 16; // lava (движущиеся)
             }
 
             let attempts = 0;
@@ -434,7 +467,7 @@
                     x: Math.random() * (320 - platformWidth),
                     y: yPos,
                     w: platformWidth,
-                    h: height, // ← ИСПОЛЬЗУЕМ ИНДИВИДУАЛЬНУЮ ВЫСОТУ
+                    h: height,
                     mv: isMoving ? (Math.random() - 0.5) * (4 + difficultyLevel) : 0,
                     breakable: isBreakable,
                     cracks: 0
@@ -724,7 +757,7 @@
                 if (p.removed) return;
 
                 if (p.breakable) {
-                    if (blockKImg.complete) {
+                    if (blockKImg.complete && blockKImg.naturalWidth > 0) {
                         ctx.drawImage(blockKImg, p.x, p.y, p.w, p.h);
                     } else {
                         ctx.fillStyle = p.cracks === 1 ? "#6B3410" : "#8B4513";
@@ -732,14 +765,14 @@
                     }
                     if (p.cracks === 1) drawCracks(p);
                 } else if (p.mv === 0) {
-                    if (travaImg.complete) {
+                    if (travaImg.complete && travaImg.naturalWidth > 0) {
                         ctx.drawImage(travaImg, p.x, p.y, p.w, p.h);
                     } else {
                         ctx.fillStyle = "#2e7d32";
                         drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                     }
                 } else {
-                    if (lavaImg.complete) {
+                    if (lavaImg.complete && lavaImg.naturalWidth > 0) {
                         ctx.drawImage(lavaImg, p.x, p.y, p.w, p.h);
                     } else {
                         ctx.fillStyle = "#ff4444";
@@ -757,10 +790,34 @@
                 ctx.globalAlpha = 1;
             });
 
-            ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+            // Рисуем персонажа
+            if (playerImg.complete && playerImg.naturalWidth > 0) {
+                ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+            } else {
+                // Запасной вариант - цветной круг
+                ctx.fillStyle = "#4CAF50";
+                ctx.beginPath();
+                ctx.arc(player.x + player.w/2, player.y + player.h/2, player.w/2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Глаза
+                ctx.fillStyle = "#000";
+                ctx.beginPath();
+                ctx.arc(player.x + player.w/3, player.y + player.h/3, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(player.x + 2*player.w/3, player.y + player.h/3, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
         function startGame() {
+            // Проверяем, загрузились ли изображения
+            if (!allImagesLoaded) {
+                alert('Подождите, идет загрузка ресурсов...');
+                return;
+            }
+            
             score = 0;
             lastShrinkThreshold = 0;
             jumpCount = 3;
@@ -914,6 +971,3 @@
     </script>
 </body>
 </html>
-
-
-

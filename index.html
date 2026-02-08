@@ -338,6 +338,13 @@
             }
         }
 
+        // Проверка перекрытия платформ
+        function platformsOverlap(p1, p2) {
+            const horizontalOverlap = p1.x < p2.x + p2.w && p1.x + p1.w > p2.x;
+            const verticalOverlap = Math.abs(p1.y - p2.y) < 25; // Минимальное расстояние по вертикали
+            return horizontalOverlap && verticalOverlap;
+        }
+
         function createPlatforms() {
             platforms = [];
             platformWidth = 70; 
@@ -353,15 +360,36 @@
             let moveChance = 0.8 - (difficultyLevel * 0.05);
 
             const isBreakable = Math.random() > Math.max(0.3, breakChance);
-            platforms.push({
-                x: Math.random() * (320 - platformWidth),
-                y: yPos,
-                w: platformWidth,
-                h: 12,
-                mv: Math.random() > Math.max(0.4, moveChance) ? (Math.random() - 0.5) * (4 + difficultyLevel) : 0,
-                breakable: isBreakable,
-                cracks: 0
-            });
+            
+            // Пытаемся создать платформу без перекрытий
+            let attempts = 0;
+            let newPlatform;
+            let overlapping = true;
+            
+            while (overlapping && attempts < 10) {
+                newPlatform = {
+                    x: Math.random() * (320 - platformWidth),
+                    y: yPos,
+                    w: platformWidth,
+                    h: 12,
+                    mv: Math.random() > Math.max(0.4, moveChance) ? (Math.random() - 0.5) * (4 + difficultyLevel) : 0,
+                    breakable: isBreakable,
+                    cracks: 0
+                };
+                
+                // Проверяем перекрытие с существующими платформами
+                overlapping = false;
+                for (let p of platforms) {
+                    if (!p.removed && platformsOverlap(newPlatform, p)) {
+                        overlapping = true;
+                        break;
+                    }
+                }
+                
+                attempts++;
+            }
+            
+            platforms.push(newPlatform);
         }
 
         function createGoldParticles(x, y) {

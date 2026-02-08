@@ -301,7 +301,7 @@
             soundOn = !soundOn;
             document.getElementById('soundToggle').textContent = `ЗВУК: ${soundOn ? 'ОРУ' : 'ЗАВАЛИЛ'}`;
             
-            if (soundOn) {
+            if (soundOn && !gameOver) {
                 bgMusic.play().catch(e => console.log('Audio play prevented:', e));
             } else {
                 bgMusic.pause();
@@ -341,8 +341,38 @@
         // Проверка перекрытия платформ
         function platformsOverlap(p1, p2) {
             const horizontalOverlap = p1.x < p2.x + p2.w && p1.x + p1.w > p2.x;
-            const verticalOverlap = Math.abs(p1.y - p2.y) < 25; // Минимальное расстояние по вертикали
+            const verticalOverlap = Math.abs(p1.y - p2.y) < 25;
             return horizontalOverlap && verticalOverlap;
+        }
+
+        // Создание частиц от уменьшения платформы
+        function createShrinkParticles(p, oldWidth) {
+            const widthDiff = oldWidth - p.w;
+            const numParticles = Math.floor(widthDiff * 2); // Количество частиц зависит от уменьшения
+            
+            // Определяем цвет в зависимости от типа платформы
+            let particleColor;
+            if (p.breakable) {
+                particleColor = p.cracks === 1 ? "#6B3410" : "#8B4513";
+            } else {
+                particleColor = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+            }
+            
+            // Создаем частицы с правого и левого края платформы
+            for (let i = 0; i < numParticles; i++) {
+                const side = Math.random() > 0.5 ? 1 : -1; // Левый или правый край
+                const startX = side > 0 ? p.x + p.w : p.x;
+                
+                particles.push({
+                    x: startX + (Math.random() - 0.5) * widthDiff,
+                    y: p.y + Math.random() * p.h,
+                    vx: (Math.random() - 0.5) * 4 + side * 2,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 40 + Math.random() * 20,
+                    size: 2 + Math.random() * 2,
+                    color: particleColor
+                });
+            }
         }
 
         function createPlatforms() {
@@ -361,7 +391,6 @@
 
             const isBreakable = Math.random() > Math.max(0.3, breakChance);
             
-            // Пытаемся создать платформу без перекрытий
             let attempts = 0;
             let newPlatform;
             let overlapping = true;
@@ -377,7 +406,6 @@
                     cracks: 0
                 };
                 
-                // Проверяем перекрытие с существующими платформами
                 overlapping = false;
                 for (let p of platforms) {
                     if (!p.removed && platformsOverlap(newPlatform, p)) {
@@ -531,12 +559,22 @@
                 let pointsPerPixel = (Math.floor(Math.random() * 4) + 5) / 10;
                 score += Math.floor(offset * pointsPerPixel);
                 
+                // Уменьшение платформ с эффектом рассыпания
                 if (Math.floor(score / 1000) > lastShrinkThreshold) {
                     lastShrinkThreshold = Math.floor(score / 1000);
+                    const oldPlatformWidth = platformWidth;
                     platformWidth *= 0.9; 
+                    
                     platforms.forEach(p => {
-                        if (!p.removed) p.w *= 0.9;
+                        if (!p.removed) {
+                            const oldWidth = p.w;
+                            p.w *= 0.9;
+                            // Создаем частицы рассыпания для каждой платформы
+                            createShrinkParticles(p, oldWidth);
+                        }
                     });
+                    
+                    if (soundOn) tg.HapticFeedback.impactOccurred('heavy');
                 }
 
                 scoreDiv.textContent = score;
@@ -567,6 +605,11 @@
         function triggerGameOver() {
             gameOver = true;
             clearInterval(gameInterval);
+            
+            // Останавливаем музыку при окончании игры
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+            
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('doodle_highscore', highScore);
@@ -636,6 +679,11 @@
             player.dy = 0;
             gameOver = false;
             gameInterval = setInterval(update, 1000/60);
+            
+            // Продолжаем музыку при возрождении
+            if (soundOn) {
+                bgMusic.play().catch(e => console.log('Audio play prevented:', e));
+            }
         }
 
         function draw() {
@@ -660,7 +708,7 @@
             });
 
             particles.forEach(part => {
-                ctx.globalAlpha = part.life / 30;
+                ctx.globalAlpha = part.life / 40;
                 ctx.fillStyle = part.color;
                 ctx.beginPath();
                 ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
@@ -689,7 +737,9 @@
             if(gameInterval) clearInterval(gameInterval);
             gameInterval = setInterval(update, 1000/60);
             
+            // Запускаем музыку только при старте игры
             if (soundOn) {
+                bgMusic.currentTime = 0;
                 bgMusic.play().catch(e => console.log('Audio play prevented:', e));
             }
         }
@@ -821,15 +871,6 @@
                 setRightButton(false);
             }
         });
-
-        // Автозапуск музыки после загрузки страницы
-        setTimeout(() => {
-            if (soundOn) {
-                bgMusic.play().catch(e => {
-                    console.log('Autoplay blocked, music will start on first interaction');
-                });
-            }
-        }, 500);
     </script>
 </body>
 </html>

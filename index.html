@@ -104,7 +104,7 @@
 
         #controls {
             display: flex;
-            gap: 20px;
+            gap: 0;
             margin-top: 25px;
             width: 100%;
             max-width: 600px;
@@ -127,9 +127,20 @@
             justify-content: center;
         }
 
+        #jump-btn {
+            background: #b8b8b8;
+            flex: 0 0 80px;
+            margin: 0 10px;
+        }
+
         .btn svg {
             width: 50px;
             height: 50px;
+        }
+
+        #jump-btn svg {
+            width: 60px;
+            height: 60px;
         }
     </style>
 </head>
@@ -155,7 +166,7 @@
         <div id="settingsMenu" class="overlay">
             <h2>НАСТРОЙКИ</h2>
             <button class="menu-btn" id="themeToggle" onclick="toggleTheme()">ТЕМНАЯ ТЕМА: ВЫКЛ</button>
-            <button class="menu-btn" id="soundToggle" onclick="toggleSound()">ЗВУК: ЗАВАЛИЛ</button>
+            <button class="menu-btn" id="soundToggle" onclick="toggleSound()">ЗВУК: ОРУ</button>
             <button class="menu-btn" id="modeToggle" onclick="toggleMode()">РЕЖИМ: КЛАССИКА</button>
             <button class="menu-btn" id="mathToggle" onclick="toggleMath()">РЕШАЛА: ВЫКЛ</button>
             <button class="menu-btn" id="weatherToggle" onclick="toggleWeather()">ПОГОДА: РАНДОМ</button>
@@ -181,6 +192,23 @@
                 <circle cx="45" cy="50" r="3" fill="none" stroke="black" stroke-width="1.5"/>
                 <circle cx="55" cy="50" r="3" fill="none" stroke="black" stroke-width="1.5"/>
                 <circle cx="50" cy="55" r="3" fill="none" stroke="black" stroke-width="1.5"/>
+            </svg>
+        </button>
+        <button id="jump-btn" class="btn">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Левая лапка -->
+                <path d="M 35 30 Q 25 35 20 45 Q 15 50 20 55 L 25 60 L 30 55 L 35 60 L 40 55 L 45 60 L 50 55 Q 55 50 50 45 Q 45 35 35 30 Z" 
+                      fill="none" stroke="black" stroke-width="2"/>
+                <circle cx="30" cy="50" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="40" cy="50" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="35" cy="55" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
+                
+                <!-- Правая лапка -->
+                <path d="M 65 30 Q 55 35 50 45 Q 45 50 50 55 L 55 60 L 60 55 L 65 60 L 70 55 L 75 60 L 80 55 Q 85 50 80 45 Q 75 35 65 30 Z" 
+                      fill="none" stroke="black" stroke-width="2"/>
+                <circle cx="60" cy="50" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="70" cy="50" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="65" cy="55" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
             </svg>
         </button>
         <button id="right-btn" class="btn">
@@ -222,19 +250,25 @@
         let highScore = localStorage.getItem('doodle_highscore') || 0;
         let gameOver = true;
         let gameInterval;
-        let canRevive = true;
         let countdownInterval = null;
         
         let isDarkTheme = false;
-        let soundOn = false;
+        let soundOn = true; // Изменено: изначально звук включен
         let gameMode = 'Классика';
         let mathEnabled = false;
-        let weatherMode = 'РАНДОМ'; // РАНДОМ, Зима, Лето, Осень, Весна
+        let weatherMode = 'РАНДОМ';
 
         let leftPressed = false;
         let rightPressed = false;
         let lastPressed = null;
         let activeTouches = new Map();
+
+        // Попытка запустить музыку при загрузке
+        window.addEventListener('load', () => {
+            if (soundOn) {
+                bgMusic.play().catch(e => console.log('Autoplay prevented:', e));
+            }
+        });
 
         function showSubMenu(menuId) {
             document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
@@ -385,6 +419,14 @@
             }
         }
 
+        function performJump() {
+            if (!gameOver && player.dy >= 0) {
+                player.dy = -10;
+                player.y -= 25;
+                if (soundOn) tg.HapticFeedback.impactOccurred('medium');
+            }
+        }
+
         function update() {
             if(gameOver) return;
 
@@ -433,7 +475,7 @@
                 player.y = 200;
                 
                 // Новая формула очков: за каждые 10 пикселей от 5 до 8 очков
-                let pointsPerPixel = (Math.floor(Math.random() * 4) + 5) / 10; // 5-8 очков на 10 пикселей = 0.5-0.8 за пиксель
+                let pointsPerPixel = (Math.floor(Math.random() * 4) + 5) / 10;
                 score += Math.floor(offset * pointsPerPixel);
                 
                 if (Math.floor(score / 1000) > lastShrinkThreshold) {
@@ -477,7 +519,8 @@
                 localStorage.setItem('doodle_highscore', highScore);
             }
 
-            if (mathEnabled && canRevive) {
+            // Изменено: теперь mathEnabled проверяется каждый раз
+            if (mathEnabled) {
                 showMathChallenge();
             } else {
                 alert("Game Over! Рекорд: " + score);
@@ -513,7 +556,6 @@
                     if (a === correct) {
                         revivePlayer();
                     } else {
-                        canRevive = false;
                         alert("Game Over! Рекорд: " + score);
                         showSubMenu('mainMenu');
                     }
@@ -529,7 +571,6 @@
                 if (timeLeft <= 0) {
                     clearInterval(countdownInterval);
                     overlay.style.display = 'none';
-                    canRevive = false;
                     alert("Game Over! Рекорд: " + score);
                     showSubMenu('mainMenu');
                 }
@@ -537,7 +578,6 @@
         }
 
         function revivePlayer() {
-            canRevive = false;
             let safePlatform = platforms.find(p => !p.breakable && p.y > 50 && p.y < 450) || platforms[0];
             player.y = safePlatform.y - player.h - 20;
             player.x = safePlatform.x;
@@ -582,7 +622,6 @@
         function startGame() {
             score = 0;
             lastShrinkThreshold = 0; 
-            canRevive = true;
             player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
             particles = [];
             leftPressed = false;
@@ -604,6 +643,7 @@
 
         const L = document.getElementById('left-btn');
         const R = document.getElementById('right-btn');
+        const J = document.getElementById('jump-btn');
 
         function setLeftButton(pressed) {
             leftPressed = pressed;
@@ -633,7 +673,7 @@
             updatePlayerDirection();
         }
 
-        // Touch события
+        // Touch события для левой кнопки
         L.addEventListener('touchstart', (e) => { 
             e.preventDefault();
             for (let touch of e.changedTouches) {
@@ -660,6 +700,7 @@
             setLeftButton(hasLeftTouch);
         }, { passive: false });
 
+        // Touch события для правой кнопки
         R.addEventListener('touchstart', (e) => { 
             e.preventDefault();
             for (let touch of e.changedTouches) {
@@ -686,13 +727,24 @@
             setRightButton(hasRightTouch);
         }, { passive: false });
 
-        // Mouse события
+        // Touch события для кнопки прыжка
+        J.addEventListener('touchstart', (e) => { 
+            e.preventDefault();
+            performJump();
+        }, { passive: false });
+
+        // Mouse события для левой кнопки
         L.addEventListener('mousedown', (e) => { e.preventDefault(); setLeftButton(true); });
         L.addEventListener('mouseup', (e) => { e.preventDefault(); setLeftButton(false); });
         L.addEventListener('mouseleave', (e) => { setLeftButton(false); });
+        
+        // Mouse события для правой кнопки
         R.addEventListener('mousedown', (e) => { e.preventDefault(); setRightButton(true); });
         R.addEventListener('mouseup', (e) => { e.preventDefault(); setRightButton(false); });
         R.addEventListener('mouseleave', (e) => { setRightButton(false); });
+
+        // Mouse события для кнопки прыжка
+        J.addEventListener('mousedown', (e) => { e.preventDefault(); performJump(); });
 
         document.addEventListener('touchend', (e) => {
             for (let touch of e.changedTouches) {
@@ -708,6 +760,9 @@
             } else if (e.key === 'ArrowRight' || e.key === 'Right') {
                 e.preventDefault();
                 setRightButton(true);
+            } else if (e.key === 'ArrowUp' || e.key === 'Up' || e.key === ' ') {
+                e.preventDefault();
+                performJump();
             }
         });
 

@@ -347,6 +347,10 @@
         let countdownInterval = null;
         let jumpCount = 3;
         
+        // Система фона
+        let bgOffset = 0; // Смещение фона
+        let bgElements = []; // Элементы фона: камни, корни, светлячки, трещины
+        
         let isDarkTheme = false;
         let soundOn = true;
         let gameMode = 'Классика';
@@ -456,6 +460,241 @@
             for(let i = 1; i < 7; i++) {
                 addPlatform(420 - (i * 80));
             }
+        }
+
+        function createBackgroundElements() {
+            bgElements = [];
+            
+            // Создаём камни на стенах
+            for (let i = 0; i < 8; i++) {
+                bgElements.push({
+                    type: 'stone',
+                    x: Math.random() < 0.5 ? Math.random() * 40 : 280 + Math.random() * 40,
+                    y: Math.random() * 1000 - 500,
+                    size: 15 + Math.random() * 25,
+                    speed: 0.2 + Math.random() * 0.2,
+                    color: isDarkTheme ? '#3a3a3a' : '#8B7355'
+                });
+            }
+            
+            // Создаём корни/лианы
+            for (let i = 0; i < 6; i++) {
+                bgElements.push({
+                    type: 'root',
+                    x: 10 + Math.random() * 300,
+                    y: Math.random() * 1000 - 500,
+                    length: 30 + Math.random() * 70,
+                    thickness: 2 + Math.random() * 3,
+                    speed: 0.3 + Math.random() * 0.2,
+                    sway: Math.random() * Math.PI * 2
+                });
+            }
+            
+            // Создаём светлячки/искры
+            for (let i = 0; i < 12; i++) {
+                bgElements.push({
+                    type: 'glow',
+                    x: 20 + Math.random() * 280,
+                    y: Math.random() * 1000 - 500,
+                    size: 2 + Math.random() * 3,
+                    speed: 0.15 + Math.random() * 0.15,
+                    color: ['#FFD700', '#FF6B35', '#90EE90'][Math.floor(Math.random() * 3)],
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+            
+            // Создаём трещины на стенах
+            for (let i = 0; i < 5; i++) {
+                bgElements.push({
+                    type: 'crack',
+                    x: Math.random() < 0.5 ? 0 : 320,
+                    y: Math.random() * 1000 - 500,
+                    height: 40 + Math.random() * 60,
+                    speed: 0.25
+                });
+            }
+        }
+
+        function drawStone(x, y, size, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            // Рисуем неровный камень
+            const points = 6;
+            for (let i = 0; i < points; i++) {
+                const angle = (i / points) * Math.PI * 2;
+                const radius = size * (0.7 + Math.random() * 0.3);
+                const px = x + Math.cos(angle) * radius;
+                const py = y + Math.sin(angle) * radius;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            // Тени на камне
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.2, y + size * 0.2, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawRoot(x, y, length, thickness, sway) {
+            ctx.strokeStyle = isDarkTheme ? '#2d5016' : '#4a7c2c';
+            ctx.lineWidth = thickness;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            
+            const segments = 8;
+            for (let i = 1; i <= segments; i++) {
+                const progress = i / segments;
+                const swayOffset = Math.sin(sway + progress * Math.PI * 2) * 8;
+                ctx.lineTo(
+                    x + swayOffset,
+                    y + progress * length
+                );
+            }
+            ctx.stroke();
+            
+            // Листочки
+            if (length > 50) {
+                ctx.fillStyle = '#5a9c3c';
+                ctx.beginPath();
+                ctx.arc(x, y + length * 0.5, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawGlow(x, y, size, color, phase) {
+            const pulse = 0.5 + Math.sin(phase) * 0.5;
+            
+            ctx.globalAlpha = 0.6 * pulse;
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, size * pulse, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawCrack(x, y, height) {
+            ctx.strokeStyle = isDarkTheme ? '#1a1a1a' : '#5a4a3a';
+            ctx.lineWidth = 1.5;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            
+            const segments = 5;
+            for (let i = 1; i <= segments; i++) {
+                const progress = i / segments;
+                const zigzag = (i % 2 === 0 ? 5 : -5);
+                ctx.lineTo(
+                    x === 0 ? zigzag : 320 + zigzag,
+                    y + progress * height
+                );
+            }
+            ctx.stroke();
+        }
+
+        function updateBackground(offset) {
+            bgOffset += offset;
+            
+            bgElements.forEach(elem => {
+                elem.y += offset * elem.speed;
+                
+                // Обновляем анимации
+                if (elem.type === 'root') {
+                    elem.sway += 0.02;
+                } else if (elem.type === 'glow') {
+                    elem.phase += 0.05;
+                }
+                
+                // Если элемент вышел за нижнюю границу, возвращаем его наверх
+                if (elem.y > 550) {
+                    elem.y = -50;
+                    if (elem.type === 'stone') {
+                        elem.x = Math.random() < 0.5 ? Math.random() * 40 : 280 + Math.random() * 40;
+                        elem.size = 15 + Math.random() * 25;
+                    } else if (elem.type === 'root') {
+                        elem.x = 10 + Math.random() * 300;
+                        elem.length = 30 + Math.random() * 70;
+                    } else if (elem.type === 'glow') {
+                        elem.x = 20 + Math.random() * 280;
+                    }
+                }
+            });
+        }
+
+        function drawBackground() {
+            // Базовый фон - каменная стена подземелья
+            const gradient = ctx.createLinearGradient(0, 0, 0, 500);
+            
+            if (isDarkTheme) {
+                // Тёмное подземелье
+                gradient.addColorStop(0, '#1a1410');
+                gradient.addColorStop(0.5, '#2a2420');
+                gradient.addColorStop(1, '#3a3430');
+            } else {
+                // Светлое подземелье
+                const depth = (bgOffset % 3000) / 3000;
+                gradient.addColorStop(0, `hsl(30, 20%, ${25 + depth * 5}%)`);
+                gradient.addColorStop(0.5, `hsl(35, 25%, ${30 + depth * 5}%)`);
+                gradient.addColorStop(1, `hsl(40, 30%, ${35 + depth * 5}%)`);
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 320, 500);
+            
+            // Текстура каменной стены
+            ctx.fillStyle = isDarkTheme ? 'rgba(0,0,0,0.1)' : 'rgba(100,80,60,0.1)';
+            for (let i = 0; i < 30; i++) {
+                const x = (i * 43) % 320;
+                const y = ((i * 67 + bgOffset * 0.05) % 500);
+                ctx.fillRect(x, y, 2, 2);
+            }
+            
+            // Рисуем боковые каменные стены
+            const wallGradientLeft = ctx.createLinearGradient(0, 0, 60, 0);
+            const wallGradientRight = ctx.createLinearGradient(320, 0, 260, 0);
+            
+            if (isDarkTheme) {
+                wallGradientLeft.addColorStop(0, '#2a241f');
+                wallGradientLeft.addColorStop(1, 'rgba(42,36,31,0)');
+                wallGradientRight.addColorStop(0, '#2a241f');
+                wallGradientRight.addColorStop(1, 'rgba(42,36,31,0)');
+            } else {
+                wallGradientLeft.addColorStop(0, '#6b5d4f');
+                wallGradientLeft.addColorStop(1, 'rgba(107,93,79,0)');
+                wallGradientRight.addColorStop(0, '#6b5d4f');
+                wallGradientRight.addColorStop(1, 'rgba(107,93,79,0)');
+            }
+            
+            ctx.fillStyle = wallGradientLeft;
+            ctx.fillRect(0, 0, 60, 500);
+            ctx.fillStyle = wallGradientRight;
+            ctx.fillRect(260, 0, 60, 500);
+            
+            // Рисуем элементы фона
+            bgElements.forEach(elem => {
+                if (elem.type === 'stone') {
+                    drawStone(elem.x, elem.y, elem.size, elem.color);
+                } else if (elem.type === 'root') {
+                    drawRoot(elem.x, elem.y, elem.length, elem.thickness, elem.sway);
+                } else if (elem.type === 'glow') {
+                    drawGlow(elem.x, elem.y, elem.size, elem.color, elem.phase);
+                } else if (elem.type === 'crack') {
+                    drawCrack(elem.x, elem.y, elem.height);
+                }
+            });
         }
 
         function addPlatform(yPos) {
@@ -640,6 +879,9 @@
                 let offset = 200 - player.y;
                 player.y = 200;
                 
+                // Обновляем фон
+                updateBackground(offset);
+                
                 let pointsPerPixel = (Math.floor(Math.random() * 4) + 7) / 10;
                 score += Math.floor(offset * pointsPerPixel);
                 
@@ -767,7 +1009,8 @@
         }
 
         function draw() {
-            ctx.clearRect(0, 0, 320, 500);
+            // Сначала рисуем фон
+            drawBackground();
             
             platforms.forEach(p => {
                 if (p.removed) return;
@@ -851,6 +1094,8 @@
             updateJumpCounter();
             player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
             particles = [];
+            bgOffset = 0;
+            createBackgroundElements(); // Создаём элементы подземелья
             leftPressed = false;
             rightPressed = false;
             lastPressed = null;

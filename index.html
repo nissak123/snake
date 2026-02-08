@@ -249,6 +249,9 @@
         const playerImg = new Image();
         playerImg.src = 'player.png';
 
+        const blockKImg = new Image(); // ← ЕДИНСТВЕННОЕ ДОБАВЛЕНИЕ
+        blockKImg.src = 'blockK.png';  // ← ЕДИНСТВЕННОЕ ДОБАВЛЕНИЕ
+
         // Фоновая музыка
         const bgMusic = new Audio('background_music.mp3');
         bgMusic.loop = true;
@@ -504,7 +507,7 @@
         function update() {
             if(gameOver) return;
 
-            let gravityIncr = 0.28; // ← ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ: гравитация теперь постоянная
+            let gravityIncr = 0.28;
             
             player.dy += gravityIncr;
             
@@ -682,18 +685,20 @@
                 if (p.removed) return;
 
                 if (p.breakable) {
-                    if (p.cracks === 1) {
-                        ctx.fillStyle = "#6B3410";
+                    // Рисуем изображение blockK.png вместо коричневого прямоугольника
+                    if (blockKImg.complete) {
+                        ctx.drawImage(blockKImg, p.x, p.y, p.w, p.h);
                     } else {
-                        ctx.fillStyle = "#8B4513";
+                        // Резервный вариант на случай, если изображение не загрузилось
+                        ctx.fillStyle = p.cracks === 1 ? "#6B3410" : "#8B4513";
+                        drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                     }
+                    
+                    if (p.cracks === 1) drawCracks(p);
                 } else {
                     ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
+                    drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                 }
-                
-                drawRoundedRect(p.x, p.y, p.w, p.h, 6);
-
-                if (p.cracks === 1) drawCracks(p);
             });
 
             particles.forEach(part => {

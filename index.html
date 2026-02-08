@@ -129,8 +129,16 @@
 
         #jump-btn {
             background: #b8b8b8;
-            flex: 0 0 80px;
+            flex: 0 0 56px;
             margin: 0 10px;
+            position: relative;
+            flex-direction: column;
+            padding: 5px;
+        }
+
+        #jump-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
 
         .btn svg {
@@ -139,8 +147,16 @@
         }
 
         #jump-btn svg {
-            width: 60px;
-            height: 60px;
+            width: 40px;
+            height: 40px;
+        }
+
+        #jump-counter {
+            position: absolute;
+            bottom: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
         }
     </style>
 </head>
@@ -197,19 +213,20 @@
         <button id="jump-btn" class="btn">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <!-- Левая лапка -->
-                <path d="M 35 30 Q 25 35 20 45 Q 15 50 20 55 L 25 60 L 30 55 L 35 60 L 40 55 L 45 60 L 50 55 Q 55 50 50 45 Q 45 35 35 30 Z" 
+                <path d="M 35 25 Q 25 30 20 40 Q 15 45 20 50 L 25 55 L 30 50 L 35 55 L 40 50 L 45 55 L 50 50 Q 55 45 50 40 Q 45 30 35 25 Z" 
                       fill="none" stroke="black" stroke-width="2"/>
-                <circle cx="30" cy="50" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
-                <circle cx="40" cy="50" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
-                <circle cx="35" cy="55" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="30" cy="45" r="2" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="40" cy="45" r="2" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="35" cy="50" r="2" fill="none" stroke="black" stroke-width="1.5"/>
                 
                 <!-- Правая лапка -->
-                <path d="M 65 30 Q 55 35 50 45 Q 45 50 50 55 L 55 60 L 60 55 L 65 60 L 70 55 L 75 60 L 80 55 Q 85 50 80 45 Q 75 35 65 30 Z" 
+                <path d="M 65 25 Q 55 30 50 40 Q 45 45 50 50 L 55 55 L 60 50 L 65 55 L 70 50 L 75 55 L 80 50 Q 85 45 80 40 Q 75 30 65 25 Z" 
                       fill="none" stroke="black" stroke-width="2"/>
-                <circle cx="60" cy="50" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
-                <circle cx="70" cy="50" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
-                <circle cx="65" cy="55" r="2.5" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="60" cy="45" r="2" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="70" cy="45" r="2" fill="none" stroke="black" stroke-width="1.5"/>
+                <circle cx="65" cy="50" r="2" fill="none" stroke="black" stroke-width="1.5"/>
             </svg>
+            <span id="jump-counter">3</span>
         </button>
         <button id="right-btn" class="btn">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -251,9 +268,10 @@
         let gameOver = true;
         let gameInterval;
         let countdownInterval = null;
+        let jumpCount = 3; // Счетчик прыжков
         
         let isDarkTheme = false;
-        let soundOn = true; // Изменено: изначально звук включен
+        let soundOn = true;
         let gameMode = 'Классика';
         let mathEnabled = false;
         let weatherMode = 'РАНДОМ';
@@ -263,12 +281,29 @@
         let lastPressed = null;
         let activeTouches = new Map();
 
-        // Попытка запустить музыку при загрузке
-        window.addEventListener('load', () => {
+        // Автозапуск музыки при загрузке приложения
+        function initMusic() {
             if (soundOn) {
-                bgMusic.play().catch(e => console.log('Autoplay prevented:', e));
+                // Добавляем обработчик первого взаимодействия пользователя
+                const startMusic = () => {
+                    bgMusic.play().catch(e => console.log('Autoplay prevented:', e));
+                    // Удаляем обработчики после первого запуска
+                    document.removeEventListener('touchstart', startMusic);
+                    document.removeEventListener('click', startMusic);
+                };
+                
+                // Пытаемся запустить сразу
+                bgMusic.play().catch(e => {
+                    console.log('Autoplay prevented, waiting for user interaction');
+                    // Если не получилось, ждем первого клика/тапа
+                    document.addEventListener('touchstart', startMusic, { once: true });
+                    document.addEventListener('click', startMusic, { once: true });
+                });
             }
-        });
+        }
+
+        // Запускаем музыку при загрузке
+        window.addEventListener('load', initMusic);
 
         function showSubMenu(menuId) {
             document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
@@ -309,472 +344,4 @@
         function toggleWeather() {
             const modes = ['РАНДОМ', 'Зима', 'Лето', 'Осень', 'Весна'];
             let currentIndex = modes.indexOf(weatherMode);
-            currentIndex = (currentIndex + 1) % modes.length;
-            weatherMode = modes[currentIndex];
-            document.getElementById('weatherToggle').textContent = `ПОГОДА: ${weatherMode}`;
-        }
-
-        function createPlatforms() {
-            platforms = [];
-            platformWidth = 70; 
-            platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0, breakable: false, cracks: 0 });
-            for(let i = 1; i < 7; i++) {
-                addPlatform(420 - (i * 80));
-            }
-        }
-
-        function addPlatform(yPos) {
-            let difficultyLevel = Math.floor(score / 1000);
-            let breakChance = 0.7 - (difficultyLevel * 0.05);
-            let moveChance = 0.8 - (difficultyLevel * 0.05);
-
-            const isBreakable = Math.random() > Math.max(0.3, breakChance);
-            platforms.push({
-                x: Math.random() * (320 - platformWidth),
-                y: yPos,
-                w: platformWidth,
-                h: 12,
-                mv: Math.random() > Math.max(0.4, moveChance) ? (Math.random() - 0.5) * (4 + difficultyLevel) : 0,
-                breakable: isBreakable,
-                cracks: 0
-            });
-        }
-
-        function createGoldParticles(x, y) {
-            for (let i = 0; i < 8; i++) {
-                particles.push({
-                    x: x,
-                    y: y,
-                    vx: (Math.random() - 0.5) * 5,
-                    vy: (Math.random() * -3) - 1,
-                    life: 25,
-                    size: 4 + Math.random() * 3,
-                    color: "#FFD700"
-                });
-            }
-        }
-
-        function createBreakParticles(p) {
-            for (let i = 0; i < 12; i++) {
-                particles.push({
-                    x: p.x + p.w / 2,
-                    y: p.y + p.h / 2,
-                    vx: (Math.random() - 0.5) * 6,
-                    vy: (Math.random() - 0.5) * 6,
-                    life: 30,
-                    size: 3 + Math.random() * 2,
-                    color: "#8B4513"
-                });
-            }
-        }
-
-        function drawRoundedRect(x, y, w, h, radius) {
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + w - radius, y);
-            ctx.arcTo(x + w, y, x + w, y + radius, radius);
-            ctx.lineTo(x + w, y + h - radius);
-            ctx.arcTo(x + w, y + h, x + w - radius, y + h, radius);
-            ctx.lineTo(x + radius, y + h);
-            ctx.arcTo(x, y + h, x, y + h - radius, radius);
-            ctx.lineTo(x, y + radius);
-            ctx.arcTo(x, y, x + radius, y, radius);
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        function drawCracks(p) {
-            ctx.strokeStyle = "#3a1d08";
-            ctx.lineWidth = 1.5;
-            
-            ctx.beginPath();
-            ctx.moveTo(p.x + p.w * 0.3, p.y);
-            ctx.lineTo(p.x + p.w * 0.35, p.y + p.h);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(p.x + p.w * 0.7, p.y);
-            ctx.lineTo(p.x + p.w * 0.65, p.y + p.h);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y + p.h * 0.5);
-            ctx.lineTo(p.x + p.w, p.y + p.h * 0.5);
-            ctx.stroke();
-        }
-
-        function updatePlayerDirection() {
-            if (leftPressed && rightPressed) {
-                if (lastPressed === 'left') {
-                    player.dx = -5;
-                } else {
-                    player.dx = 5;
-                }
-            } else if (leftPressed) {
-                player.dx = -5;
-            } else if (rightPressed) {
-                player.dx = 5;
-            } else {
-                player.dx = 0;
-            }
-        }
-
-        function performJump() {
-            if (!gameOver && player.dy >= 0) {
-                player.dy = -10;
-                player.y -= 25;
-                if (soundOn) tg.HapticFeedback.impactOccurred('medium');
-            }
-        }
-
-        function update() {
-            if(gameOver) return;
-
-            let gravityIncr = 0.28 + (Math.floor(score / 1000) * 0.02);
-            player.dy += gravityIncr;
-            
-            player.y += player.dy;
-            player.x += player.dx;
-
-            if (player.x < -40) player.x = 320;
-            if (player.x > 320) player.x = -40;
-
-            platforms = platforms.filter(p => !p.removed);
-
-            platforms.forEach((p, index) => {
-                if (p.mv !== 0) {
-                    p.x += p.mv;
-                    if (p.x < -p.w) p.x = 320;
-                    if (p.x > 320) p.x = -p.w;
-                }
-
-                if (player.dy > 0 && player.x + 10 < p.x + p.w && player.x + player.w - 10 > p.x &&
-                    player.y + player.h > p.y && player.y + player.h < p.y + p.h + 12) {
-                    
-                    createGoldParticles(player.x + player.w/2, player.y + player.h);
-
-                    if (p.breakable) {
-                        if (p.cracks === 0) {
-                            player.dy = -10;
-                            p.cracks = 1;
-                            if (soundOn) tg.HapticFeedback.impactOccurred('medium');
-                        } else if (p.cracks === 1) {
-                            createBreakParticles(p);
-                            p.removed = true;
-                            if (soundOn) tg.HapticFeedback.impactOccurred('heavy');
-                        }
-                    } else {
-                        player.dy = -10;
-                        if (soundOn) tg.HapticFeedback.impactOccurred('light');
-                    }
-                }
-            });
-
-            if (player.y < 200) {
-                let offset = 200 - player.y;
-                player.y = 200;
-                
-                // Новая формула очков: за каждые 10 пикселей от 5 до 8 очков
-                let pointsPerPixel = (Math.floor(Math.random() * 4) + 5) / 10;
-                score += Math.floor(offset * pointsPerPixel);
-                
-                if (Math.floor(score / 1000) > lastShrinkThreshold) {
-                    lastShrinkThreshold = Math.floor(score / 1000);
-                    platformWidth *= 0.9; 
-                    platforms.forEach(p => {
-                        if (!p.removed) p.w *= 0.9;
-                    });
-                }
-
-                scoreDiv.textContent = score;
-                platforms.forEach(p => {
-                    p.y += offset;
-                    if (p.y > 500) {
-                        p.y = -20;
-                        addPlatform(-20);
-                        platforms.splice(platforms.indexOf(p), 1);
-                    }
-                });
-                particles.forEach(part => part.y += offset);
-            }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let part = particles[i];
-                part.x += part.vx;
-                part.y += part.vy;
-                part.vy += 0.15;
-                part.life--;
-                if (part.life <= 0) particles.splice(i, 1);
-            }
-
-            if (player.y > 500) triggerGameOver();
-            draw();
-        }
-
-        function triggerGameOver() {
-            gameOver = true;
-            clearInterval(gameInterval);
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('doodle_highscore', highScore);
-            }
-
-            // Изменено: теперь mathEnabled проверяется каждый раз
-            if (mathEnabled) {
-                showMathChallenge();
-            } else {
-                alert("Game Over! Рекорд: " + score);
-                showSubMenu('mainMenu');
-            }
-        }
-
-        function showMathChallenge() {
-            const overlay = document.getElementById('mathOverlay');
-            const qH3 = document.getElementById('mathQuestion');
-            const ansDiv = document.getElementById('mathAnswers');
-            const timerDiv = document.getElementById('timer');
-            
-            overlay.style.display = 'flex';
-            
-            const n1 = Math.floor(Math.random() * 800) + 100;
-            const n2 = Math.floor(Math.random() * 800) + 100;
-            const correct = n1 + n2;
-            
-            qH3.textContent = `${n1} + ${n2} = ?`;
-            
-            let answers = [correct, correct + Math.floor(Math.random() * 100) - 50, correct + Math.floor(Math.random() * 100) - 50]
-                .sort(() => Math.random() - 0.5);
-            ansDiv.innerHTML = '';
-            
-            answers.forEach(a => {
-                const btn = document.createElement('button');
-                btn.className = 'ans-btn';
-                btn.textContent = a;
-                btn.onclick = () => {
-                    clearInterval(countdownInterval);
-                    overlay.style.display = 'none';
-                    if (a === correct) {
-                        revivePlayer();
-                    } else {
-                        alert("Game Over! Рекорд: " + score);
-                        showSubMenu('mainMenu');
-                    }
-                };
-                ansDiv.appendChild(btn);
-            });
-
-            let timeLeft = 3;
-            timerDiv.textContent = timeLeft;
-            countdownInterval = setInterval(() => {
-                timeLeft--;
-                timerDiv.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(countdownInterval);
-                    overlay.style.display = 'none';
-                    alert("Game Over! Рекорд: " + score);
-                    showSubMenu('mainMenu');
-                }
-            }, 1000);
-        }
-
-        function revivePlayer() {
-            let safePlatform = platforms.find(p => !p.breakable && p.y > 50 && p.y < 450) || platforms[0];
-            player.y = safePlatform.y - player.h - 20;
-            player.x = safePlatform.x;
-            player.dy = 0;
-            gameOver = false;
-            gameInterval = setInterval(update, 1000/60);
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, 320, 500);
-            
-            platforms.forEach(p => {
-                if (p.removed) return;
-
-                if (p.breakable) {
-                    if (p.cracks === 1) {
-                        ctx.fillStyle = "#6B3410";
-                    } else {
-                        ctx.fillStyle = "#8B4513";
-                    }
-                } else {
-                    ctx.fillStyle = p.mv !== 0 ? "#ff4444" : "#2e7d32";
-                }
-                
-                drawRoundedRect(p.x, p.y, p.w, p.h, 6);
-
-                if (p.cracks === 1) drawCracks(p);
-            });
-
-            particles.forEach(part => {
-                ctx.globalAlpha = part.life / 30;
-                ctx.fillStyle = part.color;
-                ctx.beginPath();
-                ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.globalAlpha = 1;
-            });
-
-            ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
-        }
-
-        function startGame() {
-            score = 0;
-            lastShrinkThreshold = 0; 
-            player = { x: 135, y: 300, w: 50, h: 50, dx: 0, dy: 0 };
-            particles = [];
-            leftPressed = false;
-            rightPressed = false;
-            lastPressed = null;
-            activeTouches.clear();
-            scoreDiv.textContent = '0';
-            createPlatforms();
-            document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
-            gameOver = false;
-            if(gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(update, 1000/60);
-            
-            // Запуск музыки при старте игры если звук включен
-            if (soundOn) {
-                bgMusic.play().catch(e => console.log('Autoplay prevented:', e));
-            }
-        }
-
-        const L = document.getElementById('left-btn');
-        const R = document.getElementById('right-btn');
-        const J = document.getElementById('jump-btn');
-
-        function setLeftButton(pressed) {
-            leftPressed = pressed;
-            if (pressed) {
-                lastPressed = 'left';
-            } else {
-                if (rightPressed) {
-                    lastPressed = 'right';
-                } else {
-                    lastPressed = null;
-                }
-            }
-            updatePlayerDirection();
-        }
-
-        function setRightButton(pressed) {
-            rightPressed = pressed;
-            if (pressed) {
-                lastPressed = 'right';
-            } else {
-                if (leftPressed) {
-                    lastPressed = 'left';
-                } else {
-                    lastPressed = null;
-                }
-            }
-            updatePlayerDirection();
-        }
-
-        // Touch события для левой кнопки
-        L.addEventListener('touchstart', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.set(touch.identifier, 'left');
-            }
-            setLeftButton(true);
-        }, { passive: false });
-
-        L.addEventListener('touchend', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-            let hasLeftTouch = Array.from(activeTouches.values()).includes('left');
-            setLeftButton(hasLeftTouch);
-        }, { passive: false });
-
-        L.addEventListener('touchcancel', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-            let hasLeftTouch = Array.from(activeTouches.values()).includes('left');
-            setLeftButton(hasLeftTouch);
-        }, { passive: false });
-
-        // Touch события для правой кнопки
-        R.addEventListener('touchstart', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.set(touch.identifier, 'right');
-            }
-            setRightButton(true);
-        }, { passive: false });
-
-        R.addEventListener('touchend', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-            let hasRightTouch = Array.from(activeTouches.values()).includes('right');
-            setRightButton(hasRightTouch);
-        }, { passive: false });
-
-        R.addEventListener('touchcancel', (e) => { 
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-            let hasRightTouch = Array.from(activeTouches.values()).includes('right');
-            setRightButton(hasRightTouch);
-        }, { passive: false });
-
-        // Touch события для кнопки прыжка
-        J.addEventListener('touchstart', (e) => { 
-            e.preventDefault();
-            performJump();
-        }, { passive: false });
-
-        // Mouse события для левой кнопки
-        L.addEventListener('mousedown', (e) => { e.preventDefault(); setLeftButton(true); });
-        L.addEventListener('mouseup', (e) => { e.preventDefault(); setLeftButton(false); });
-        L.addEventListener('mouseleave', (e) => { setLeftButton(false); });
-        
-        // Mouse события для правой кнопки
-        R.addEventListener('mousedown', (e) => { e.preventDefault(); setRightButton(true); });
-        R.addEventListener('mouseup', (e) => { e.preventDefault(); setRightButton(false); });
-        R.addEventListener('mouseleave', (e) => { setRightButton(false); });
-
-        // Mouse события для кнопки прыжка
-        J.addEventListener('mousedown', (e) => { e.preventDefault(); performJump(); });
-
-        document.addEventListener('touchend', (e) => {
-            for (let touch of e.changedTouches) {
-                activeTouches.delete(touch.identifier);
-            }
-        }, { passive: true });
-
-        // Управление с клавиатуры (стрелки)
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'Left') {
-                e.preventDefault();
-                setLeftButton(true);
-            } else if (e.key === 'ArrowRight' || e.key === 'Right') {
-                e.preventDefault();
-                setRightButton(true);
-            } else if (e.key === 'ArrowUp' || e.key === 'Up' || e.key === ' ') {
-                e.preventDefault();
-                performJump();
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'Left') {
-                e.preventDefault();
-                setLeftButton(false);
-            } else if (e.key === 'ArrowRight' || e.key === 'Right') {
-                e.preventDefault();
-                setRightButton(false);
-            }
-        });
-    </script>
-</body>
-</html>
+            currentIndex = (currentIndex + 1) % modes.

@@ -249,15 +249,15 @@
         const playerImg = new Image();
         playerImg.src = 'player.png';
 
-        // 🔹 Загружаем все три изображения
+        // Загружаем все три изображения
         const blockKImg = new Image();
         blockKImg.src = 'blockK.png';
 
         const travaImg = new Image();
         travaImg.src = 'trava.png';
 
-        const lavaImg = new Image(); // ← НОВОЕ
-        lavaImg.src = 'lava.png';   // ← НОВОЕ
+        const lavaImg = new Image();
+        lavaImg.src = 'lava.png';
 
         // Фоновая музыка
         const bgMusic = new Audio('background_music.mp3');
@@ -380,7 +380,8 @@
         function createPlatforms() {
             platforms = [];
             platformWidth = 70; 
-            platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0, breakable: false, cracks: 0 });
+            // Первая платформа — зелёная (trava), высота = 14
+            platforms.push({ x: 110, y: 420, w: 100, h: 14, mv: 0, breakable: false, cracks: 0 });
             for(let i = 1; i < 7; i++) {
                 addPlatform(420 - (i * 80));
             }
@@ -392,7 +393,16 @@
             let moveChance = 0.8 - (difficultyLevel * 0.05);
 
             const isBreakable = Math.random() > Math.max(0.3, breakChance);
-            
+            const isMoving = Math.random() > Math.max(0.4, moveChance);
+
+            // ✅ Индивидуальная высота для каждого типа
+            let height = 14; // default: trava (зелёные)
+            if (isBreakable) {
+                height = 18; // blockK (коричневые)
+            } else if (isMoving) {
+                height = 16; // lava (движущиеся)
+            }
+
             let attempts = 0;
             let newPlatform;
             let overlapping = true;
@@ -402,8 +412,8 @@
                     x: Math.random() * (320 - platformWidth),
                     y: yPos,
                     w: platformWidth,
-                    h: 20,
-                    mv: Math.random() > Math.max(0.4, moveChance) ? (Math.random() - 0.5) * (4 + difficultyLevel) : 0,
+                    h: height, // ← ИСПОЛЬЗУЕМ ИНДИВИДУАЛЬНУЮ ВЫСОТУ
+                    mv: isMoving ? (Math.random() - 0.5) * (4 + difficultyLevel) : 0,
                     breakable: isBreakable,
                     cracks: 0
                 };
@@ -692,7 +702,6 @@
                 if (p.removed) return;
 
                 if (p.breakable) {
-                    // 🔸 Коричневые — blockK.png
                     if (blockKImg.complete) {
                         ctx.drawImage(blockKImg, p.x, p.y, p.w, p.h);
                     } else {
@@ -701,7 +710,6 @@
                     }
                     if (p.cracks === 1) drawCracks(p);
                 } else if (p.mv === 0) {
-                    // 🔸 Зелёные — trava.png
                     if (travaImg.complete) {
                         ctx.drawImage(travaImg, p.x, p.y, p.w, p.h);
                     } else {
@@ -709,7 +717,6 @@
                         drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                     }
                 } else {
-                    // 🔸 Движущиеся (оранжевые/красные) — lava.png
                     if (lavaImg.complete) {
                         ctx.drawImage(lavaImg, p.x, p.y, p.w, p.h);
                     } else {
@@ -885,4 +892,3 @@
     </script>
 </body>
 </html>
-

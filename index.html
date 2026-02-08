@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Doodle Jump Challenge Pro</title>
-    <script src="https://telegram.org/js/telegram-web-app.js "></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --tg-bg: var(--tg-theme-bg-color, #ffffff);
@@ -504,7 +504,8 @@
         function update() {
             if(gameOver) return;
 
-            let gravityIncr = 0.28 + (Math.floor(score / 1000) * 0.02);
+            let gravityIncr = 0.28; // ← ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ: гравитация теперь постоянная
+            
             player.dy += gravityIncr;
             
             player.y += player.dy;

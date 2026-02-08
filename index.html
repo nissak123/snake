@@ -98,6 +98,7 @@
             border: 2px solid var(--tg-btn);
             border-radius: 10px;
             font-weight: bold;
+            cursor: pointer;
         }
 
         #timer { font-size: 24px; color: red; margin-bottom: 10px; }
@@ -125,6 +126,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
         }
 
         #jump-btn {
@@ -268,7 +270,7 @@
         let gameOver = true;
         let gameInterval;
         let countdownInterval = null;
-        let jumpCount = 3; // Счетчик прыжков
+        let jumpCount = 3;
         
         let isDarkTheme = false;
         let soundOn = true;
@@ -280,30 +282,6 @@
         let rightPressed = false;
         let lastPressed = null;
         let activeTouches = new Map();
-
-        // Автозапуск музыки при загрузке приложения
-        function initMusic() {
-            if (soundOn) {
-                // Добавляем обработчик первого взаимодействия пользователя
-                const startMusic = () => {
-                    bgMusic.play().catch(e => console.log('Autoplay prevented:', e));
-                    // Удаляем обработчики после первого запуска
-                    document.removeEventListener('touchstart', startMusic);
-                    document.removeEventListener('click', startMusic);
-                };
-                
-                // Пытаемся запустить сразу
-                bgMusic.play().catch(e => {
-                    console.log('Autoplay prevented, waiting for user interaction');
-                    // Если не получилось, ждем первого клика/тапа
-                    document.addEventListener('touchstart', startMusic, { once: true });
-                    document.addEventListener('click', startMusic, { once: true });
-                });
-            }
-        }
-
-        // Запускаем музыку при загрузке
-        window.addEventListener('load', initMusic);
 
         function showSubMenu(menuId) {
             document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
@@ -323,9 +301,8 @@
             soundOn = !soundOn;
             document.getElementById('soundToggle').textContent = `ЗВУК: ${soundOn ? 'ОРУ' : 'ЗАВАЛИЛ'}`;
             
-            // Управление музыкой
             if (soundOn) {
-                bgMusic.play().catch(e => console.log('Autoplay prevented:', e));
+                bgMusic.play().catch(e => console.log('Audio play prevented:', e));
             } else {
                 bgMusic.pause();
             }
@@ -344,4 +321,81 @@
         function toggleWeather() {
             const modes = ['РАНДОМ', 'Зима', 'Лето', 'Осень', 'Весна'];
             let currentIndex = modes.indexOf(weatherMode);
-            currentIndex = (currentIndex + 1) % modes.
+            currentIndex = (currentIndex + 1) % modes.length;
+            weatherMode = modes[currentIndex];
+            document.getElementById('weatherToggle').textContent = `ПОГОДА: ${weatherMode}`;
+        }
+
+        function updateJumpCounter() {
+            const counterEl = document.getElementById('jump-counter');
+            const jumpBtn = document.getElementById('jump-btn');
+            counterEl.textContent = jumpCount;
+            
+            if (jumpCount <= 0) {
+                jumpBtn.classList.add('disabled');
+            } else {
+                jumpBtn.classList.remove('disabled');
+            }
+        }
+
+        function createPlatforms() {
+            platforms = [];
+            platformWidth = 70; 
+            platforms.push({ x: 110, y: 420, w: 100, h: 15, mv: 0, breakable: false, cracks: 0 });
+            for(let i = 1; i < 7; i++) {
+                addPlatform(420 - (i * 80));
+            }
+        }
+
+        function addPlatform(yPos) {
+            let difficultyLevel = Math.floor(score / 1000);
+            let breakChance = 0.7 - (difficultyLevel * 0.05);
+            let moveChance = 0.8 - (difficultyLevel * 0.05);
+
+            const isBreakable = Math.random() > Math.max(0.3, breakChance);
+            platforms.push({
+                x: Math.random() * (320 - platformWidth),
+                y: yPos,
+                w: platformWidth,
+                h: 12,
+                mv: Math.random() > Math.max(0.4, moveChance) ? (Math.random() - 0.5) * (4 + difficultyLevel) : 0,
+                breakable: isBreakable,
+                cracks: 0
+            });
+        }
+
+        function createGoldParticles(x, y) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() * -3) - 1,
+                    life: 25,
+                    size: 4 + Math.random() * 3,
+                    color: "#FFD700"
+                });
+            }
+        }
+
+        function createBreakParticles(p) {
+            for (let i = 0; i < 12; i++) {
+                particles.push({
+                    x: p.x + p.w / 2,
+                    y: p.y + p.h / 2,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    life: 30,
+                    size: 3 + Math.random() * 2,
+                    color: "#8B4513"
+                });
+            }
+        }
+
+        function drawRoundedRect(x, y, w, h, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + w - radius, y);
+            ctx.arcTo(x + w, y, x + w, y + radius, radius);
+            ctx.lineTo(x + w, y + h - radius);
+            ctx.arcTo(x + w, y + h, x +

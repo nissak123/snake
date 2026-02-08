@@ -249,12 +249,15 @@
         const playerImg = new Image();
         playerImg.src = 'player.png';
 
-        // 🔹 Добавлены оба изображения
+        // 🔹 Загружаем все три изображения
         const blockKImg = new Image();
         blockKImg.src = 'blockK.png';
 
         const travaImg = new Image();
         travaImg.src = 'trava.png';
+
+        const lavaImg = new Image(); // ← НОВОЕ
+        lavaImg.src = 'lava.png';   // ← НОВОЕ
 
         // Фоновая музыка
         const bgMusic = new Audio('background_music.mp3');
@@ -689,7 +692,7 @@
                 if (p.removed) return;
 
                 if (p.breakable) {
-                    // 🔹 Коричневые — blockK.png
+                    // 🔸 Коричневые — blockK.png
                     if (blockKImg.complete) {
                         ctx.drawImage(blockKImg, p.x, p.y, p.w, p.h);
                     } else {
@@ -698,7 +701,7 @@
                     }
                     if (p.cracks === 1) drawCracks(p);
                 } else if (p.mv === 0) {
-                    // 🔹 Зелёные (неподвижные) — trava.png
+                    // 🔸 Зелёные — trava.png
                     if (travaImg.complete) {
                         ctx.drawImage(travaImg, p.x, p.y, p.w, p.h);
                     } else {
@@ -706,9 +709,13 @@
                         drawRoundedRect(p.x, p.y, p.w, p.h, 6);
                     }
                 } else {
-                    // 🔹 Красные (движущиеся) — как раньше
-                    ctx.fillStyle = "#ff4444";
-                    drawRoundedRect(p.x, p.y, p.w, p.h, 6);
+                    // 🔸 Движущиеся (оранжевые/красные) — lava.png
+                    if (lavaImg.complete) {
+                        ctx.drawImage(lavaImg, p.x, p.y, p.w, p.h);
+                    } else {
+                        ctx.fillStyle = "#ff4444";
+                        drawRoundedRect(p.x, p.y, p.w, p.h, 6);
+                    }
                 }
             });
 
